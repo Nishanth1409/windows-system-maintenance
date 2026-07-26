@@ -1,0 +1,238 @@
+Windows Registry Editor Version 5.00
+
+; =============================================================================
+; DESKTOP RIGHT-CLICK MENU — FINAL (arrangement + modern icons)
+; =============================================================================
+;
+;  MAIN MENU (Show more options on Windows 11)
+;  ─────────────────────────────────────────
+;   1-4   View | Sort by | Refresh | New          (Windows)
+;   5-6   Display | Personalize                    (Windows)
+;   7     Installed Apps
+;   8     NVIDIA ▶
+;   9     System Maintenance ▶
+;  10     Power ▶
+;
+;  ICONS: imageres.dll = Windows 11 modern style
+;         icons\*.ico   = official NVIDIA logos
+; =============================================================================
+
+; --- Cleanup legacy keys ---
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\SystemMaintenance]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_Apps]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_NVIDIA]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwr_SystemMaintenance]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_Power]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\RestartPSleep]
+
+[-HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\NvAppDesktopContext]
+[-HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\NvCplDesktopContext]
+[-HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\NvGpuShExtDesktopContext]
+[-HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers\NvCplDesktopContext.disabled]
+[-HKEY_CLASSES_ROOT\DesktopBackground\shellex\ContextMenuHandlers\NvAppDesktopContext]
+[-HKEY_CLASSES_ROOT\DesktopBackground\shellex\ContextMenuHandlers\NvCplDesktopContext]
+[-HKEY_CLASSES_ROOT\DesktopBackground\shellex\ContextMenuHandlers\NvGpuShExtDesktopContext]
+[-HKEY_CLASSES_ROOT\Directory\Background\shell\Restart Explorer]
+
+; Hide replaced Windows defaults (Shift+right-click to access)
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\AppsMenu]
+"Extended"=dword:00000001
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\RestartPC]
+"Extended"=dword:00000001
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\ShutdownPC]
+"Extended"=dword:00000001
+
+; =============================================================================
+; 7 — Installed Apps
+; =============================================================================
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_01_Apps]
+"MUIVerb"="Installed Apps"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-123"
+"Position"="Bottom"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_01_Apps\command]
+@="explorer.exe shell:AppsFolder"
+
+; =============================================================================
+; 8 — NVIDIA ▶
+; =============================================================================
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_02_NVIDIA]
+"MUIVerb"="NVIDIA"
+"Icon"="C:\\SystemMaintenance\\icons\\nvidia_app.ico"
+"Position"="Bottom"
+"SubCommands"=""
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_02_NVIDIA\shell]
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_02_NVIDIA\shell\01_NVIDIAApp]
+@="NVIDIA App"
+"Icon"="C:\\SystemMaintenance\\icons\\nvidia_app.ico"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_02_NVIDIA\shell\01_NVIDIAApp\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\Open_NVIDIA.ps1\" -Target App"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_02_NVIDIA\shell\02_ControlPanel]
+@="NVIDIA Control Panel"
+"Icon"="C:\\SystemMaintenance\\icons\\nvidia_controlpanel.ico"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_02_NVIDIA\shell\02_ControlPanel\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\Open_NVIDIA.ps1\" -Target ControlPanel"
+
+; =============================================================================
+; 9 — System Maintenance ▶
+; Order: Weekly (bundle first) → Monthly → As needed → Admin (heavy last)
+; =============================================================================
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance]
+"MUIVerb"="System Maintenance"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-140"
+"Position"="Bottom"
+"SubCommands"=""
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell]
+
+; Remove old submenu key names from prior layouts
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\01_QuickClean]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\02_FreeSpace]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\03_UpdateWindows]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\03_UpdateApps]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\04_UpdateApps]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\04_RestartExplorer]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\04_FullMaintenance]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05_FullMaintenance]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05_RestartExplorer]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05_SecurityScan]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\06_StartupApps]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\07_SoftwareCheckup]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\08_RestartExplorer]
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\09_FullMaintenance]
+
+; --- WEEKLY (user, light) ---
+; 9.1 Primary weekly bundle
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\01_SoftwareCheckup]
+@="Weekly — Software Checkup (All)"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-140"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\01_SoftwareCheckup\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_SoftwareCheckup.ps1\""
+
+; 9.2 Temp and cache
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\02_QuickClean]
+@="Weekly — Quick Clean"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-112"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\02_QuickClean\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_QuickClean.ps1\""
+
+; 9.3 OS updates
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\03_UpdateWindows]
+@="Weekly — Update Windows"
+"Icon"="%SystemRoot%\\System32\\shell32.dll,259"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\03_UpdateWindows\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_UpdateWindows.ps1\""
+
+; --- MONTHLY (user) ---
+; 9.4 Disk space
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\04_FreeSpace]
+@="Monthly — Free Disk Space"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-184"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\04_FreeSpace\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_CleanDrive.ps1\""
+
+; 9.5 App updates
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05_UpdateApps]
+@="Monthly — Update All Apps"
+"Icon"="%SystemRoot%\\System32\\shell32.dll,166"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05_UpdateApps\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_UpdateApps.ps1\""
+
+; 9.5b Spicetify (separate from Update All Apps)
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05b_UpdateSpicetify]
+@="As needed — Update Spotify + Spicetify"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-102"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05b_UpdateSpicetify\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_UpdateSpicetify.ps1\""
+
+; 9.6 Security
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\06_SecurityScan]
+@="Monthly — Security Quick Scan"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-78"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\06_SecurityScan\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_SecurityScan.ps1\""
+
+; 9.7 Boot speed
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\07_StartupApps]
+@="Monthly — Startup Apps"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-123"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\07_StartupApps\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_StartupApps.ps1\""
+
+; --- AS NEEDED (user, fix) ---
+; 9.8 Slow Explorer fix (registry tune + icon cache rebuild + restart)
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\08_FixExplorer]
+@="As needed — Fix Slow Explorer"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-30"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\08_FixExplorer\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_FixExplorer.ps1\""
+
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\08_RestartExplorer]
+
+; 9.9 RAM Map Empty (Administrator — all 5 purge actions in one click)
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\09_RamEmpty]
+@="As needed — RAM Map Empty"
+"Icon"="%SystemRoot%\\System32\\shell32.dll,47"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\09_RamEmpty\command]
+@="\"C:\\SystemMaintenance\\System_EmptyRAM.bat\""
+
+; --- 1-2 MONTHS (admin, heaviest) ---
+; 9.10 Full repair + deep clean
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\10_FullMaintenance]
+@="1-2 Months — Full Maintenance (Admin)"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-78"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\10_FullMaintenance\command]
+@="\"C:\\SystemMaintenance\\System_AllInOne.bat\""
+
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\11_Win11Debloat]
+
+; =============================================================================
+; 10 — Power ▶  (PC session control)
+; =============================================================================
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power]
+"MUIVerb"="Power"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-109"
+"Position"="Bottom"
+"SubCommands"=""
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell]
+
+; Power icons = same as Windows desktop Restart / Sleep / Shut down defaults
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\01_Restart]
+@="Restart"
+"Icon"="%SystemRoot%\\System32\\shell32.dll,238"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\01_Restart\command]
+@="shutdown.exe /r /t 0"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\02_Sleep]
+@="Sleep"
+"Icon"="%SystemRoot%\\System32\\imageres.dll,-101"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\02_Sleep\command]
+@="rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\03_Shutdown]
+@="Shut down"
+"Icon"="%SystemRoot%\\System32\\shell32.dll,27"
+
+[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\03_Shutdown\command]
+@="shutdown.exe /s /t 0"

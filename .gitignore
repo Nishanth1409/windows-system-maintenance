@@ -1,0 +1,14 @@
+# Exclude local/personal artifacts from the public toolkit mirror
+logs/
+PortablePackage/
+tools/
+app/
+.vscode/
+*.lnk
+*_AgentSessionData.json
+RAMMap64.exe
+*.exe
+*.log
+node_modules/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,120 @@
+﻿NOTABLE APPS NOT IN ANY GROUP (filtered)
+Generated: 2026-07-08 01:59
+Grouped apps: 30 | Notable ungrouped: 114
+
+These are real apps (not Windows runtimes) without a group shortcut yet.
+
+1TamilMV
+4K Wallpapers
+AdBlock360
+App Group
+Autoruns64
+Blackmagic Proxy Generator Lite
+Blackmagic Remote Monitor
+DaVinci Control Panels
+DaVinci Resolve
+Dell Power Manager
+Discord
+EarTrumpet
+Fairlight Audio Accelerator Utility
+Fairlight Studio Utility
+Foto Owl  AI Powered Beautiful Online Client Photo Gallery
+Foto Owl: AI Powered Beautiful Online Client Photo Gallery
+Git
+Git Bash
+Git for Windows
+Git GUI
+GitHub Desktop
+Google Chrome
+Google Classroom
+Google Drive
+hdqwalls.com Best Source For HD,4k,5k,8k Wallpapers
+iCloud Outlook
+Intel(R) Computing Improvement Program
+Intel(R) Wireless Bluetooth(R)
+JoisApp
+Local AI Manager for Microsoft 365
+Logi Options+
+Mail and Calendar
+Microsoft Edge
+Microsoft Office Home and Student 2021 - en-us
+Microsoft Office Home and Student 2021 - kn-in
+Microsoft OneNote - en-us
+Microsoft OneNote - kn-in
+Microsoft Photos
+Microsoft Store
+Microsoft Teams Meeting Add-in for Microsoft Office
+Microsoft Visual Studio Code (User)
+MKVToolNix
+MongoDB 8.3.4 2008R2Plus SSL (64 bit)
+MongoDB Shell
+My Alienware
+Nilesoft Shell
+Node.js
+NVIDIA App
+NVIDIA Control Panel
+NVIDIA FrameView SDK 1.7.12227.37421622
+NVIDIA PhysX System Software 9.23.1019
+O+ Connect
+OneNote
+Paint
+Password Manager
+PC Health Check
+PC Manager
+PDFgear
+Phone Link
+Pieces OS
+PowerPoint
+PowerShell
+PowerShell 7-x64
+PowerToys.SparseApp
+Proton VPN
+Python 3.13
+Quick Share
+QuickLook
+RAMMap64
+RapidRAW
+Razer Axon Official Theme
+Realtek Audio Control
+Realtek Card Reader
+Remote Desktop Connection
+Riot Client
+Riot Vanguard
+SharpKeys
+Snipping Tool
+Sticky Notes (new)
+Stitch
+Swishy - AI Motion Designer & Animator
+Swishy - AI Motion Designer & Animator   Create Stunning Animations
+Task Scheduler
+Traosk Utils Queue
+Twinkle Tray
+uTorrent Web
+VALORANT
+Ventusky.com
+Vercel
+Virtual Sound Card 2.2
+Visual Studio Code
+VLC media player
+VoiceAccess
+Windhawk
+Windows 11 Installation Assistant
+Windows Advanced Settings
+Windows Calculator
+Windows Camera
+Windows Defender Firewall with Advanced Security
+Windows Notepad
+Windows PC Health Check
+Windows PowerShell ISE 5.1
+Windows PowerShell ISE 5.1 (x86)
+Windows Security
+Windows Subsystem for Linux
+Windows Subsystem for Linux Update
+Windows Terminal
+Windsurf
+WinRAR
+Wintoys
+Word
+WSL
+WSL Settings
+XPS Viewer

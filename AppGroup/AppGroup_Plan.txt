@@ -1,0 +1,70 @@
+﻿APP GROUP — FULL PLAN (live from appgroups.json)
+Updated: 2026-07-08 01:59
+App Group software: 1.5.0 | Total grouped: 31 apps | Groups: 8
+
+TASKBAR — pin these 8 group icons
+  Browse | Talk | Design | Desk | Code | Mind AI | Relax | Arena
+
+GROUPS
+------
+
+Browse (3)
+  chrome.exe, Gmail, msedge.exe
+
+Talk (5)
+  WhatsApp, Gmail, Telegram Desktop, Google Meet, Zoom.exe
+
+Design (4)
+  Canva.exe, Figma.exe, Resolve.exe, Affinity.exe
+
+Desk (4)
+  WINWORD.EXE, PDFLauncher.exe, EXCEL.EXE, POWERPNT.EXE
+
+Code (5)
+  Cursor.exe, Antigravity.exe, Code.exe, GitHub, GitHubDesktop.exe
+
+Mind AI (4)
+  ChatGPT, Google Gemini, Codex, claude.exe
+
+Relax (5)
+  YouTube, YouTube Music, Spotify.exe, DoubleHeadphones.exe, JioHotstar - Watch TV Shows, Movies, Specials, Live Cricket & Football
+
+Arena (1)
+  RiotClientServices.exe
+
+PURPOSE RULES
+-------------
+  Browse         — browsers and Gmail — quick daily web
+  Talk           — WhatsApp, Telegram, Zoom, Meet (Gmail shared with Browse)
+  Design         — Canva, Figma, Affinity, DaVinci — design
+  Desk           — Word, Excel, PowerPoint, PDFgear
+  Code           — Cursor, VS Code, Antigravity, GitHub Desktop
+  Mind AI        — Claude, ChatGPT, Gemini, Codex
+  Relax          — YouTube, Spotify, music, shows, JioHotstar
+  Arena          — Riot Client (launch VALORANT from here)
+
+PORTABLE EXE / CUSTOM SHORTCUTS IN GROUPS
+  C:\SystemMaintenance\app\DoubleHeadphones.exe   → Relax (direct exe)
+  C:\SystemMaintenance\app\WhatsApp.lnk           → Talk
+  C:\SystemMaintenance\app\Telegram Desktop.lnk   → Talk
+  C:\SystemMaintenance\app\Codex.lnk              → Mind AI
+  YouTube Music — Chrome PWA lnk (no portable exe on disk)
+
+CHROME PROFILES (for school / shared Chrome)
+  Person 1 | Srushti | Your Chrome | Nkr — no profile named Vijender
+
+NOTABLE UNGROUPED (114 apps — see Apps_Not_In_Groups_Notable.txt)
+  Discord, VLC, NVIDIA App, PowerToys, Windhawk, WinRAR, Proton VPN, etc.
+
+EXCLUDED
+--------
+  JoisApp — unwanted program; uninstall with Revo Uninstaller
+  Windows runtimes (.NET, VC++, WinAppRuntime) — not launchable apps
+
+SCRIPTS
+-------
+  Re-apply all groups:  powershell -File C:\SystemMaintenance\_ApplyAppGroups.ps1
+  Sync from app edits: powershell -File C:\SystemMaintenance\_SyncFromLiveAppGroup.ps1
+  Refresh docs:         powershell -File C:\SystemMaintenance\_UpdateAppGroupDocs.ps1
+  Ungrouped list:       C:\SystemMaintenance\AppGroup\Apps_Not_In_Groups.txt
+  Notable ungrouped:    C:\SystemMaintenance\AppGroup\Apps_Not_In_Groups_Notable.txt

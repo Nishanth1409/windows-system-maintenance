@@ -1,0 +1,216 @@
+﻿APPS NOT IN ANY APP GROUP
+Generated: 2026-07-08 01:59
+In groups: 30 apps | Not grouped: 210 apps
+
+NAME | TARGET | SOURCE
+-----|--------|------
+1TamilMV | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+4K Wallpapers | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+AdBlock360 | (winget) | Winget
+Administrative Templates (.admx) for Windows Server2025 November 2024 Update ARP\Machine\X86\{26569AA9-45E3-4F62-951D-E3F9F8CC5331} | (winget) | Winget
+Antigravity 2.1.4 | (winget) | Winget
+Antigravity IDE | C:\Users\nisha\AppData\Local\Programs\Antigravity IDE\Antigravity IDE.exe | Start Menu
+Antigravity IDE (User) | (winget) | Winget
+App Group | C:\Program Files\App Group\AppGroup.exe | Start Menu
+App Group 1.5.0 - Bundled | (winget) | Winget
+Autoruns64 | C:\Program Files\Autoruns64.exe | Start Menu
+Blackmagic Proxy Generator Lite | C:\Program Files\Blackmagic Design\DaVinci Resolve\Resolve.exe | Start Menu
+Blackmagic Remote Monitor | C:\Program Files\Blackmagic Design\DaVinci Resolve\Blackmagic Remote Monitor.exe | Start Menu
+Cloudflare One Client | C:\Program Files\Cloudflare\Cloudflare WARP\Cloudflare WARP.exe | Start Menu
+Cursor (User) | (winget) | Winget
+DaVinci Control Panels | C:\Program Files (x86)\Blackmagic Design\DaVinci Control Panels\Setup Utility\DaVinci Control Panels Setup.exe | Start Menu
+DaVinci Resolve | C:\Program Files\Blackmagic Design\DaVinci Resolve\Resolve.exe | Start Menu
+DaVinci Resolve Control Panels | (winget) | Winget
+Dell Power Manager | (winget) | Winget
+Dell Power Manager Service | (winget) | Winget
+Discord | C:\Users\nisha\AppData\Local\Discord\Update.exe | Start Menu
+EarTrumpet | (winget) | Winget
+Fairlight Audio Accelerator Utility | (winget) | Winget
+Fairlight Studio Utility | C:\Program Files (x86)\Blackmagic Design\DaVinci Control Panels\Fairlight Studio Utility\Fairlight Studio Utility.exe | Start Menu
+Figma Agent | (winget) | Winget
+Foto Owl  AI Powered Beautiful Online Client Photo Gallery | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Foto Owl: AI Powered Beautiful Online Client Photo Gallery | (winget) | Winget
+Git | (winget) | Winget
+Git Bash | C:\Program Files\Git\git-bash.exe | Start Menu
+Git for Windows | C:\Program Files\Git\mingw64\bin\wintoast.exe | Start Menu
+Git GUI | C:\Program Files\Git\cmd\git-gui.exe | Start Menu
+GitHub Desktop | C:\Users\nisha\AppData\Local\GitHubDesktop\GitHubDesktop.exe | Start Menu
+gnuplot 6.0 patchlevel 1 | C:\Program Files\gnuplot\bin\wgnuplot.exe | Start Menu
+gnuplot 6.0 patchlevel 4 | C:\Program Files\gnuplot\bin\wgnuplot.exe | Start Menu
+Google Chrome | C:\Program Files\Google\Chrome\Application\chrome.exe | Start Menu
+Google Classroom | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Google Drive | C:\Program Files\Google\Drive File Stream\127.0.1.0\GoogleDriveFS.exe | Start Menu
+hdqwalls.com Best Source For HD,4k,5k,8k Wallpapers | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+iCloud Outlook | (winget) | Winget
+Intel(R) Computing Improvement Program | (winget) | Winget
+Intel(R) Wireless Bluetooth(R) | (winget) | Winget
+Intel® Graphics Command Center | (winget) | Winget
+JoisApp | (winget) | Winget
+Local AI Manager for Microsoft 365 | (winget) | Winget
+Logi Options+ | C:\Program Files\LogiOptionsPlus\logioptionsplus.exe | Start Menu
+Mail and Calendar | (winget) | Winget
+Microsoft .Net Native Framework Package 1.3 | (winget) | Winget
+Microsoft .Net Native Framework Package 1.7 | (winget) | Winget
+Microsoft .Net Native Framework Package 2.1 | (winget) | Winget
+Microsoft .Net Native Framework Package 2.2 | (winget) | Winget
+Microsoft .Net Native Runtime Package 1.4 | (winget) | Winget
+Microsoft .Net Native Runtime Package 1.7 | (winget) | Winget
+Microsoft .Net Native Runtime Package 2.1 | (winget) | Winget
+Microsoft .Net Native Runtime Package 2.2 | (winget) | Winget
+Microsoft ASP.NET Core 8.0.28 - Shared Framework (x64) | (winget) | Winget
+Microsoft ASP.NET Core 9.0.17 - Shared Framework (x86) | (winget) | Winget
+Microsoft Edge | C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe | Start Menu
+Microsoft Edge Beta | (winget) | Winget
+Microsoft Edge For Game Bar | (winget) | Winget
+Microsoft Engagement Framework | (winget) | Winget
+Microsoft GameInput | (winget) | Winget
+Microsoft Jenny (Natural) - English (United States) | (winget) | Winget
+Microsoft MPI (10.1.12498.52) | (winget) | Winget
+Microsoft MPI SDK (10.1.12498.18) | (winget) | Winget
+Microsoft Office Home and Student 2021 - en-us | (winget) | Winget
+Microsoft Office Home and Student 2021 - kn-in | (winget) | Winget
+Microsoft OneNote - en-us | (winget) | Winget
+Microsoft OneNote - kn-in | (winget) | Winget
+Microsoft Photos | (winget) | Winget
+Microsoft SQL Server Data-Tier Application Framework | (winget) | Winget
+Microsoft SQL Server Data-Tier Application Framework (x86) | (winget) | Winget
+Microsoft Store | (winget) | Winget
+Microsoft Teams Meeting Add-in for Microsoft Office | (winget) | Winget
+Microsoft Update Health Tools | (winget) | Winget
+Microsoft Visual C++ 2010 | (winget) | Winget
+Microsoft Visual C++ 2012 UWP Desktop Runtime Package | (winget) | Winget
+Microsoft Visual C++ 2013 Runtime Package | (winget) | Winget
+Microsoft Visual C++ 2013 UWP Desktop Runtime Package | (winget) | Winget
+Microsoft Visual C++ 2015 UWP Desktop Runtime Package | (winget) | Winget
+Microsoft Visual C++ 2015 UWP Runtime Package | (winget) | Winget
+Microsoft Visual Studio Code (User) | (winget) | Winget
+Microsoft Windows Desktop Runtime - 8.0.28 (x64) | (winget) | Winget
+Microsoft Windows Desktop Runtime - 9.0.17 (x64) | (winget) | Winget
+Microsoft Windows Desktop Runtime - 9.0.17 (x86) | (winget) | Winget
+Microsoft.Office.ActionsServer | (winget) | Winget
+Microsoft.UI.Xaml.2.3 | (winget) | Winget
+Microsoft.UI.Xaml.2.4 | (winget) | Winget
+Microsoft.UI.Xaml.2.6 | (winget) | Winget
+Microsoft.UI.Xaml.2.7 | (winget) | Winget
+Microsoft.UI.Xaml.2.8 | (winget) | Winget
+Microsoft.WindowsAppRuntime.1.3 | (winget) | Winget
+MKVToolNix | C:\Program Files\MKVToolNix\mkvtoolnix-gui.exe | Start Menu
+MKVToolNix 100.0.0 (64-bit) | (winget) | Winget
+MongoDB 8.3.4 2008R2Plus SSL (64 bit) | (winget) | Winget
+MongoDB Shell | (winget) | Winget
+MPF | (winget) | Winget
+My Alienware | (winget) | Winget
+Nilesoft Shell | C:\Program Files\Nilesoft Shell\shell.exe | Start Menu
+Node.js | C:\Program Files\nodejs\node.exe | Start Menu
+NVIDIA App | C:\Program Files\NVIDIA Corporation\NVIDIA app\CEF\NVIDIA App.exe | Start Menu
+NVIDIA App 11.0.7.247 | (winget) | Winget
+NVIDIA Control Panel | (winget) | Winget
+NVIDIA FrameView SDK 1.7.12227.37421622 | (winget) | Winget
+NVIDIA PhysX System Software 9.23.1019 | (winget) | Winget
+O+ Connect | C:\Program Files\O+Connect\O+Connect.exe | Start Menu
+OfficePushNotificationsUtility | (winget) | Winget
+OneNote | C:\Program Files\Microsoft Office\root\Office16\ONENOTE.EXE | Start Menu
+Paint | (winget) | Winget
+Password Manager | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+PC Health Check | C:\Users\nisha\AppData\Local\PCHealthCheck\PCHealthCheck.exe | Start Menu
+PC Manager | (winget) | Winget
+PDFgear | C:\Program Files\PDFgear\PDFLauncher.exe | Start Menu
+PDFgear 2.1.16 | (winget) | Winget
+Phone Link | (winget) | Winget
+Pieces OS | (winget) | Winget
+PowerPoint | C:\Program Files\Microsoft Office\root\Office16\POWERPNT.EXE | Start Menu
+PowerShell | (winget) | Winget
+PowerShell 7 (x64) | C:\Program Files\PowerShell\7\pwsh.exe | Start Menu
+PowerShell 7-x64 | (winget) | Winget
+PowerToys (Preview) | C:\Users\nisha\AppData\Local\PowerToys\PowerToys.exe | Start Menu
+PowerToys (Preview) x64 | (winget) | Winget
+PowerToys.SparseApp | (winget) | Winget
+Proton VPN | C:\Program Files\Proton\VPN\ProtonVPN.Launcher.exe | Start Menu
+psqlODBC 13.02.0000 | (winget) | Winget
+Python 3.13 | (winget) | Winget
+Quick Share | (winget) | Winget
+QuickLook | (winget) | Winget
+RAMMap64 | C:\SystemMaintenance\RAMMap64.exe | Start Menu
+RapidRAW | C:\Users\nisha\AppData\Local\RapidRAW\RapidRAW.exe | Start Menu
+Razer Axon Official Theme | (winget) | Winget
+Realtek Audio Control | (winget) | Winget
+Realtek Card Reader | (winget) | Winget
+Remote Desktop Connection | C:\WINDOWS\system32\mstsc.exe | Start Menu
+Revo Uninstaller 2.7.0 | (winget) | Winget
+Riot Client | C:\Riot Games\Riot Client\RiotClientServices.exe | Start Menu
+Riot Vanguard | (winget) | Winget
+SharpKeys | C:\Users\nisha\AppData\Roaming\Microsoft\Installer\{0B9129DE-4A3E-46D2-9B0A-E9A4A9421B32}\_353648F50ED1D384458BD2.exe | Start Menu
+Snipping Tool | (winget) | Winget
+Speech Pack - English (United States) | (winget) | Winget
+Speech Pack - English (United States) - MTL | (winget) | Winget
+Start Experiences App | (winget) | Winget
+Sticky Notes (new) | C:\Program Files\Microsoft Office\root\Office16\ONENOTE.EXE | Start Menu
+Stitch | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Store Experience Host | (winget) | Winget
+Support for Alienware m16 R2   Drivers & Downloads   Dell India | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Swishy - AI Motion Designer & Animator   Create Stunning Animations | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Swishy - AI Motion Designer & Animator | Create Stunning Animations | (winget) | Winget
+Task Scheduler | C:\WINDOWS\system32\taskschd.msc | Start Menu
+Traosk Utils Queue | (winget) | Winget
+Twinkle Tray | C:\Users\nisha\AppData\Local\Programs\twinkle-tray\Twinkle Tray.exe | Start Menu
+Twinkle Tray 1.17.2 | (winget) | Winget
+uTorrent Web | C:\Users\nisha\AppData\Roaming\uTorrent Web\utweb.exe | Start Menu
+VALORANT | C:\Riot Games\Riot Client\RiotClientServices.exe | Start Menu
+Ventusky.com | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Vercel | C:\Program Files\Google\Chrome\Application\chrome_proxy.exe | Start Menu
+Virtual Sound Card 2.2 | (winget) | Winget
+Visual Studio Code | C:\Users\nisha\AppData\Local\Programs\Microsoft VS Code\Code.exe | Start Menu
+VLC media player | C:\Program Files\VideoLAN\VLC\vlc.exe | Start Menu
+VoiceAccess | C:\WINDOWS\system32\voiceaccess.exe | Start Menu
+vs_CoreEditorFonts | (winget) | Winget
+Widgets Platform Runtime | (winget) | Winget
+WinAppRuntime.Main.1.2 | (winget) | Winget
+WinAppRuntime.Main.1.5 | (winget) | Winget
+WinAppRuntime.Main.1.6 | (winget) | Winget
+WinAppRuntime.Main.1.7 | (winget) | Winget
+WinAppRuntime.Main.1.8 | (winget) | Winget
+WinAppRuntime.Main.2 | (winget) | Winget
+WinAppRuntime.Singleton | (winget) | Winget
+Windhawk | C:\Program Files\Windhawk\windhawk.exe | Start Menu
+Windhawk v1.7.3 | (winget) | Winget
+Windows 11 Installation Assistant | (winget) | Winget
+Windows Advanced Settings | (winget) | Winget
+Windows App Runtime DDLM 8000.675.1142.0-x6 | (winget) | Winget
+Windows App Runtime DDLM 8000.675.1142.0-x8 | (winget) | Winget
+Windows App Runtime DDLM 8000.770.947.0-x6 | (winget) | Winget
+Windows App Runtime DDLM 8000.770.947.0-x8 | (winget) | Winget
+Windows Application Compatibility Enhancements | (winget) | Winget
+Windows Calculator | (winget) | Winget
+Windows Camera | (winget) | Winget
+Windows Defender Firewall with Advanced Security | C:\WINDOWS\system32\WF.msc | Start Menu
+Windows ML Runtime Intel OpenVINO Execution Provider 1.8 | (winget) | Winget
+Windows ML Runtime NVIDIA TensorRT-RTX Execution Provider 1.8 | (winget) | Winget
+Windows ML Runtime NVIDIA TensorRT-RTX Execution Provider 2 | (winget) | Winget
+Windows Notepad | (winget) | Winget
+Windows PC Health Check | (winget) | Winget
+Windows PowerShell ISE 5.1 | C:\WINDOWS\system32\WindowsPowerShell\v1.0\PowerShell_ISE.exe | Start Menu
+Windows PowerShell ISE 5.1 (x86) | C:\WINDOWS\syswow64\WindowsPowerShell\v1.0\PowerShell_ISE.exe | Start Menu
+Windows SDK AddOn | (winget) | Winget
+Windows Security | (winget) | Winget
+Windows Subsystem for Linux | (winget) | Winget
+Windows Subsystem for Linux Update | (winget) | Winget
+Windows Terminal | (winget) | Winget
+WindowsAppRuntime.1.1 | (winget) | Winget
+WindowsAppRuntime.1.2 | (winget) | Winget
+WindowsAppRuntime.1.3 | (winget) | Winget
+WindowsAppRuntime.1.4 | (winget) | Winget
+WindowsAppRuntime.1.5 | (winget) | Winget
+WindowsAppRuntime.1.6 | (winget) | Winget
+WindowsAppRuntime.1.7 | (winget) | Winget
+WindowsAppRuntime.1.8 | (winget) | Winget
+WindowsAppRuntime.2 | (winget) | Winget
+Windsurf | (winget) | Winget
+WinRAR | C:\Program Files\WinRAR\WinRAR.exe | Start Menu
+WinRAR 7.22 (64-bit) | (winget) | Winget
+Wintoys | (winget) | Winget
+Word | C:\Program Files\Microsoft Office\root\Office16\WINWORD.EXE | Start Menu
+WSL | C:\WINDOWS\Installer\{FC60318A-104F-41CF-A030-1AA3E98DBEFC}\wsl.ico | Start Menu
+WSL Settings | C:\WINDOWS\Installer\{FC60318A-104F-41CF-A030-1AA3E98DBEFC}\wsl.ico | Start Menu
+XPS Viewer | C:\WINDOWS\system32\xpsrchvw.exe | Start Menu
+Zoom Workplace | C:\Users\nisha\AppData\Roaming\Zoom\bin\Zoom.exe | Start Menu
+ಕನ್ನಡ ಸ್ಥಳೀಯ ಅನುಭವ ಪ್ಯಾಕ್ | (winget) | Winget
