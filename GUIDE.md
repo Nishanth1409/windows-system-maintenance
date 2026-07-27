@@ -879,9 +879,9 @@ Add any of these in the App Group app, then run `tools\_SyncFromLiveAppGroup.ps1
 
 **App:** Windhawk — `C:\Program Files\Windhawk\windhawk.exe`  
 **Live data:** `C:\ProgramData\Windhawk` (ModsSource + `HKLM\SOFTWARE\Windhawk\Engine\Mods`)  
-**Docs / local mirror:** `C:\SystemMaintenance\windhawk\README.md` → `windhawk\analysis\` (40 installed mods)
+**Docs / local mods repo:** `D:\Projects\tools\windhawk-mods` (GitHub: [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods)) → `analysis\` (40 installed mods).
 
-Full inventory (names, folders, purpose): see [`windhawk\README.md`](windhawk/README.md).
+Full inventory (names, folders, purpose): see that repo’s `README.md`. Windhawk is **not** stored inside System Maintenance.
 
 **Layout:** one folder per installed mod under `windhawk\analysis\<mod-id>\` with current source (`.cpp` / `.wh.cpp`), settings JSON, and matching `.bak`. Examples: Tray Audio Output, Mic Tray Switch, Custom Menu Height, Taskbar Auto-Hide Peek, Lock Screen / Per-Monitor Wallpaper, stylers (Explorer / Start / Settings / Taskbar / Notification Center).
 
