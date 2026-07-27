@@ -15,3 +15,5 @@ Thumbs.db
 
 # Windhawk lives in sibling repo windhawk-mods — never store a second copy here
 windhawk/
+
+.cursor/
