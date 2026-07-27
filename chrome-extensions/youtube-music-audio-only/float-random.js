@@ -499,11 +499,26 @@
     };
   }
 
-  function isSongPlaybackMode() {
+  function getAvPlaybackMode() {
+    // YTM stores Song/Video on ytmusic-av-toggle: ATV_PREFERRED | OMV_PREFERRED
+    const toggle = document.querySelector('ytmusic-av-toggle');
+    const toggleMode = (toggle?.getAttribute('playback-mode') || '').toUpperCase();
+    if (toggleMode === 'ATV_PREFERRED' || toggleMode.includes('ATV')) return 'song';
+    if (toggleMode === 'OMV_PREFERRED' || toggleMode.includes('OMV')) return 'video';
+
     const page = document.querySelector('ytmusic-player-page');
-    const mode = (page?.getAttribute('playback-mode') || '').toLowerCase();
-    if (mode.includes('song') || mode === 'audio') return true;
-    if (mode.includes('video')) return false;
+    const pageMode = (page?.getAttribute('playback-mode') || '').toUpperCase();
+    if (pageMode === 'ATV_PREFERRED' || pageMode.includes('ATV')) return 'song';
+    if (pageMode === 'OMV_PREFERRED' || pageMode.includes('OMV')) return 'video';
+    if (pageMode.includes('SONG') || pageMode === 'AUDIO') return 'song';
+    if (pageMode.includes('VIDEO')) return 'video';
+    return null;
+  }
+
+  function isSongPlaybackMode() {
+    const avMode = getAvPlaybackMode();
+    if (avMode === 'song') return true;
+    if (avMode === 'video') return false;
 
     const avToggle = document.querySelector('ytmusic-av-toggle');
     if (avToggle) {
@@ -528,6 +543,16 @@
       return video.getVideoTracks().length > 0;
     }
     return false;
+  }
+
+  /** Official music videos are landscape; ATV song art is usually near-square. */
+  function videoLooksLikeMusicVideo(video) {
+    if (!videoHasPicture(video)) return false;
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    if (!w || !h) return false;
+    const ratio = w / h;
+    return ratio >= 1.25 || ratio <= 0.8;
   }
 
   function canUseVideoPip(video) {
@@ -601,7 +626,7 @@
       ).toLowerCase();
       if (label.includes('video') && !btn.classList.contains('selected')) {
         btn.click();
-        await waitMs(900);
+        await waitMs(400);
         return videoHasPicture(getPlaybackVideo());
       }
     }
@@ -626,19 +651,23 @@
 
   async function drawAlbumArtOnCanvas(canvas, artUrl, metrics) {
     const size = pipCanvasSizeFromMetrics(metrics || { width: 1, height: 1 });
-    canvas.width = size.width;
-    canvas.height = size.height;
 
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, size.width, size.height);
-
+    // Load first. Setting canvas.width/height clears pixels — never await while blank
+    // or PiP shows a black screen via captureStream.
+    let img;
     try {
-      const img = await loadImage(artUrl);
-      ctx.drawImage(img, 0, 0, size.width, size.height);
+      img = await loadImage(artUrl);
     } catch (_) {
-      /* keep solid background */
+      return false;
     }
+
+    if (canvas.width !== size.width || canvas.height !== size.height) {
+      canvas.width = size.width;
+      canvas.height = size.height;
+    }
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, size.width, size.height);
+    return true;
   }
 
   function tryExpandPlayerSync() {
@@ -846,6 +875,7 @@
   }
 
   let lastPipCanvasMetrics = null;
+  let lastPipArtUrl = null;
   let pipGuardCleanup = null;
 
   function clearNativePipGuard() {
@@ -853,8 +883,49 @@
     pipGuardCleanup = null;
   }
 
+  async function waitForAlbumArtChange(previousUrl, timeoutMs) {
+    const immediate = getAlbumArtUrl();
+    if (immediate && immediate !== previousUrl) return immediate;
+
+    const deadline = Date.now() + (timeoutMs || 2000);
+    let latest = immediate;
+    while (Date.now() < deadline) {
+      await waitMs(100);
+      latest = getAlbumArtUrl();
+      if (latest && latest !== previousUrl) return latest;
+    }
+    return latest || getAlbumArtUrl();
+  }
+
+  async function redrawCanvasPipCover(artUrl) {
+    const canvas = document.getElementById(PIP_ART_CANVAS_ID);
+    if (!canvas || !artUrl) return false;
+    if (artUrl === lastPipArtUrl && canvas.width > 0) return true;
+
+    const metrics =
+      lastPipCanvasMetrics || (await resolvePipContentMetrics(null, artUrl));
+    lastPipCanvasMetrics = metrics;
+    const painted = await drawAlbumArtOnCanvas(canvas, artUrl, metrics);
+    if (!painted) return false;
+    lastPipArtUrl = artUrl;
+
+    const pipVideo = document.getElementById(PIP_CANVAS_VIDEO_ID);
+    if (pipVideo) {
+      const active =
+        pipVideo.srcObject instanceof MediaStream &&
+        pipVideo.srcObject.getVideoTracks().some((t) => t.readyState === 'live');
+      if (!active) {
+        pipVideo.srcObject = canvas.captureStream(30);
+        await pipVideo.play().catch(() => {});
+      }
+    }
+    return true;
+  }
+
   async function swapPictureInPictureTo(video) {
     if (!video || !document.pictureInPictureEnabled) return false;
+    // Never put a blank/unready video into PiP — that is the black screen.
+    if (!videoHasPicture(video)) return false;
     prepareVideoForPip(video);
 
     if (video.paused) {
@@ -879,35 +950,167 @@
     return document.pictureInPictureElement === video;
   }
 
+  /**
+   * Settle Song vs Video after a track change.
+   * Mixed playlists flip ATV↔OMV after the track event — never commit on the first
+   * ATV reading or audio→video PiP stays on the cover forever.
+   * Returns 'song' | 'video'.
+   */
+  async function waitForSettledPipKind(timeoutMs) {
+    const deadline = Date.now() + (timeoutMs || 3500);
+    let songSince = 0;
+    let videoSince = 0;
+
+    while (Date.now() < deadline) {
+      const avMode = getAvPlaybackMode();
+      const video = getPlaybackVideo();
+      const hasPic = videoHasPicture(video);
+      const looksMv = videoLooksLikeMusicVideo(video);
+
+      // Explicit video with frames → live video PiP
+      if (avMode === 'video' && hasPic) {
+        if (!videoSince) videoSince = Date.now();
+        songSince = 0;
+        if (Date.now() - videoSince >= 120) return 'video';
+        await waitMs(80);
+        continue;
+      }
+
+      // Video mode declared, frames not ready yet — keep previous PiP, wait
+      if (avMode === 'video') {
+        songSince = 0;
+        videoSince = 0;
+        await waitMs(100);
+        continue;
+      }
+
+      // Explicit song wins over leftover frames from the previous music video
+      // (mixed playlist: video → audio).
+      if (avMode === 'song') {
+        videoSince = 0;
+        if (!songSince) songSince = Date.now();
+        // Delay commit so a following OMV flip can win (mixed: audio → video).
+        if (Date.now() - songSince >= 700) return 'song';
+        await waitMs(80);
+        continue;
+      }
+
+      // Mode attr lagging: landscape frames mean music video
+      if (looksMv) {
+        songSince = 0;
+        if (!videoSince) videoSince = Date.now();
+        if (Date.now() - videoSince >= 120) return 'video';
+        await waitMs(80);
+        continue;
+      }
+
+      if (isSongPlaybackMode()) {
+        videoSince = 0;
+        if (!songSince) songSince = Date.now();
+        if (Date.now() - songSince >= 700) return 'song';
+      } else if (hasPic) {
+        songSince = 0;
+        if (!videoSince) videoSince = Date.now();
+        if (Date.now() - videoSince >= 120) return 'video';
+      } else {
+        songSince = 0;
+        videoSince = 0;
+      }
+
+      await waitMs(80);
+    }
+
+    const avMode = getAvPlaybackMode();
+    const video = getPlaybackVideo();
+    if (avMode === 'video' || videoLooksLikeMusicVideo(video)) return 'video';
+    if (avMode === 'song' || isSongPlaybackMode()) return 'song';
+    if (videoHasPicture(video)) return 'video';
+    return 'song';
+  }
+
+  let pipHandoffWatchId = 0;
+
+  function clearPipHandoffWatch() {
+    pipHandoffWatchId += 1;
+  }
+
+  /**
+   * Mixed playlists often flip Song↔Video after our first settle.
+   * Keep watching briefly and upgrade/downgrade PiP without a black flash.
+   */
+  function startMixedPlaylistPipHandoffWatch() {
+    const watchId = ++pipHandoffWatchId;
+    const started = Date.now();
+    const maxMs = 4500;
+
+    const tick = async () => {
+      if (watchId !== pipHandoffWatchId) return;
+      if (Date.now() - started > maxMs) return;
+
+      const pipEl = document.pictureInPictureElement;
+      if (!(pipEl instanceof HTMLVideoElement)) return;
+
+      const avMode = getAvPlaybackMode();
+      const video = getPlaybackVideo();
+      const looksMv = videoLooksLikeMusicVideo(video);
+
+      try {
+        if (pipEl.id === PIP_CANVAS_VIDEO_ID) {
+          // Cover PiP, but track became / flipped to a music video
+          if (avMode === 'video' || looksMv) {
+            if (videoHasPicture(video)) {
+              const ok = await forceUpgradeCanvasPipToVideo();
+              if (ok) return;
+            } else if (avMode === 'video') {
+              const ready = await waitForVideoDimensions(video || getPlaybackVideo(), 1500);
+              if (ready && videoHasPicture(ready)) {
+                const ok = await forceUpgradeCanvasPipToVideo();
+                if (ok) return;
+              }
+            }
+          }
+        } else if (avMode === 'song' && !looksMv) {
+          // Live video PiP, but track flipped to song/audio
+          await forceDowngradeVideoPipToCover();
+          return;
+        }
+      } catch (err) {
+        logWarn('Mixed playlist PiP handoff failed:', err?.message);
+      }
+
+      if (watchId === pipHandoffWatchId) {
+        setTimeout(tick, 250);
+      }
+    };
+
+    setTimeout(tick, 200);
+  }
+
   async function forceUpgradeCanvasPipToVideo() {
-    // Audio → Video: swap canvas PiP → live video PiP without exiting first
-    // (exit would require a new user gesture and fails).
+    // Keep canvas cover visible until live video has frames, then swap once.
     beginPipIntentionalSwitch();
     try {
-      for (let attempt = 0; attempt < 6; attempt++) {
-        await waitMs(450 + attempt * 400);
+      for (let attempt = 0; attempt < 8; attempt++) {
+        if (attempt > 0) await waitMs(150 + attempt * 120);
 
         let video = getPlaybackVideo();
-        try {
-          await trySwitchToVideoMode();
-        } catch (_) {
-          /* ignore */
+        if (isSongPlaybackMode() || !videoHasPicture(video)) {
+          try {
+            await trySwitchToVideoMode();
+          } catch (_) {
+            /* ignore */
+          }
+          video = getPlaybackVideo();
         }
-        await waitMs(500);
-        video = getPlaybackVideo();
 
         if (!video) continue;
         if (!videoHasPicture(video)) {
-          video = (await waitForVideoDimensions(video, 2500)) || video;
+          video = (await waitForVideoDimensions(video, 1200)) || video;
         }
         if (!videoHasPicture(video)) continue;
+        if (!document.pictureInPictureElement) return false;
 
-        // Must still have an active PiP element to legally swap without a gesture.
-        if (!document.pictureInPictureElement) {
-          return false;
-        }
-
-        const ready = (await waitForVideoDimensions(video, 3500)) || getPlaybackVideo() || video;
+        const ready = (await waitForVideoDimensions(video, 1500)) || getPlaybackVideo() || video;
         if (!ready || !videoHasPicture(ready)) continue;
 
         try {
@@ -926,52 +1129,28 @@
     }
   }
 
-  async function updatePipForTrackChange() {
-    const nextArt = getAlbumArtUrl();
+  async function forceDowngradeVideoPipToCover() {
+    // Paint cover on the canvas first, then swap — avoids black PiP between modes.
+    const coverArt =
+      (await waitForAlbumArtChange(lastPipArtUrl, 2000)) || getAlbumArtUrl();
+    if (!coverArt || !document.pictureInPictureElement) return false;
 
-    // 1) Canvas native PiP (song/album art): redraw OR upgrade to video PiP.
-    const pipEl = document.pictureInPictureElement;
-    if (pipEl && pipEl instanceof HTMLVideoElement && pipEl.id === PIP_CANVAS_VIDEO_ID) {
-      const upgraded = await forceUpgradeCanvasPipToVideo();
-      if (upgraded) return;
-
-      const canvas = document.getElementById(PIP_ART_CANVAS_ID);
-      if (canvas && nextArt) {
-        try {
-          const metrics =
-            lastPipCanvasMetrics || (await resolvePipContentMetrics(null, nextArt));
-          lastPipCanvasMetrics = metrics;
-          await drawAlbumArtOnCanvas(canvas, nextArt, metrics);
-        } catch (_) {
-          /* ignore */
-        }
-      }
-      return;
+    beginPipIntentionalSwitch();
+    try {
+      const metrics = await resolvePipContentMetrics(null, coverArt);
+      await enterCanvasAlbumArtPip(coverArt, metrics);
+      return document.pictureInPictureElement?.id === PIP_CANVAS_VIDEO_ID;
+    } catch (err) {
+      logWarn('Downgrade video PiP → cover failed:', err?.message);
+      return false;
+    } finally {
+      endPipIntentionalSwitch();
     }
+  }
 
-    // 2) Native video PiP: YTM may swap or reset the <video> on track changes.
-    // If PiP becomes a frozen frame (videoWidth=0 / no frames), re-enter PiP.
-    if (pipEl && pipEl instanceof HTMLVideoElement && pipEl.id !== PIP_CANVAS_VIDEO_ID) {
-      await waitMs(600);
-
-      // If we switched to an audio/song track, downgrade PiP to album-art PiP.
-      // Swap without exiting first (avoids Chrome user-gesture requirement).
-      if (isSongPlaybackMode() && nextArt) {
-        beginPipIntentionalSwitch();
-        try {
-          if (!document.pictureInPictureElement) return;
-          try {
-            const metrics = await resolvePipContentMetrics(null, nextArt);
-            await enterCanvasAlbumArtPip(nextArt, metrics);
-          } catch (err) {
-            logWarn('Downgrade video PiP → cover failed:', err?.message);
-          }
-        } finally {
-          endPipIntentionalSwitch();
-        }
-        return;
-      }
-
+  async function reenterLiveVideoPip() {
+    beginPipIntentionalSwitch();
+    try {
       let current = getPlaybackVideo();
       if (current && !videoHasPicture(current)) {
         try {
@@ -979,10 +1158,71 @@
         } catch (_) {
           /* ignore */
         }
-        await waitMs(800);
         current = getPlaybackVideo();
       }
+      if (!current) return false;
+      const ready = (await waitForVideoDimensions(current, 2000)) || current;
+      if (!ready || !videoHasPicture(ready) || !document.pictureInPictureElement) return false;
+      await swapPictureInPictureTo(ready);
+      startPipMediaBridge(null);
+      return (
+        document.pictureInPictureElement instanceof HTMLVideoElement &&
+        document.pictureInPictureElement.id !== PIP_CANVAS_VIDEO_ID &&
+        videoHasPicture(document.pictureInPictureElement)
+      );
+    } catch (err) {
+      logWarn('Re-enter video PiP failed:', err?.message);
+      return false;
+    } finally {
+      endPipIntentionalSwitch();
+    }
+  }
 
+  async function updatePipForTrackChange() {
+    clearPipHandoffWatch();
+    const pipEl = document.pictureInPictureElement;
+
+    // 1) Canvas native PiP (album art): song→song redraw cover; song→video upgrade to live video.
+    if (pipEl && pipEl instanceof HTMLVideoElement && pipEl.id === PIP_CANVAS_VIDEO_ID) {
+      // Kick cover update immediately for song→song (no black wait).
+      const earlyArt = getAlbumArtUrl();
+      if (earlyArt && earlyArt !== lastPipArtUrl && getAvPlaybackMode() !== 'video') {
+        redrawCanvasPipCover(earlyArt).catch(() => {});
+      }
+
+      const kind = await waitForSettledPipKind(3500);
+
+      if (kind === 'video') {
+        const upgraded = await forceUpgradeCanvasPipToVideo();
+        if (!upgraded) await reenterLiveVideoPip();
+        startMixedPlaylistPipHandoffWatch();
+        return;
+      }
+
+      const nextArt = (await waitForAlbumArtChange(lastPipArtUrl, 2000)) || getAlbumArtUrl();
+      if (nextArt) {
+        try {
+          await redrawCanvasPipCover(nextArt);
+        } catch (err) {
+          logWarn('Canvas PiP cover update failed:', err?.message);
+        }
+      }
+      // Mixed playlist: OMV may flip after ATV looked settled — upgrade then.
+      startMixedPlaylistPipHandoffWatch();
+      return;
+    }
+
+    // 2) Native video PiP: video→song → album-art PiP; video→video → keep live video.
+    if (pipEl && pipEl instanceof HTMLVideoElement && pipEl.id !== PIP_CANVAS_VIDEO_ID) {
+      const kind = await waitForSettledPipKind(3500);
+
+      if (kind === 'song') {
+        await forceDowngradeVideoPipToCover();
+        startMixedPlaylistPipHandoffWatch();
+        return;
+      }
+
+      const current = getPlaybackVideo();
       const pipLooksFrozen = !videoHasPicture(pipEl);
       const shouldReenter = Boolean(
         current &&
@@ -991,31 +1231,30 @@
           (current !== pipEl || pipLooksFrozen)
       );
 
-      if (shouldReenter) {
-        beginPipIntentionalSwitch();
-        try {
-          const ready = (await waitForVideoDimensions(current, 3500)) || current;
-          try {
-            await swapPictureInPictureTo(ready);
-          } catch (err) {
-            logWarn('Re-enter video PiP failed:', err?.message);
-          }
-        } finally {
-          endPipIntentionalSwitch();
-        }
+      // Only re-enter once the next video has frames (keeps last frame until then).
+      if ((shouldReenter || pipLooksFrozen) && current && videoHasPicture(current)) {
+        await reenterLiveVideoPip();
       }
+      // Mixed playlist: ATV may flip after OMV looked settled — downgrade then.
+      startMixedPlaylistPipHandoffWatch();
+      return;
     }
 
     // 3) Document PiP fallback: update the image element if open.
     const docPip = window.documentPictureInPicture?.window;
-    if (docPip && !docPip.closed && nextArt) {
-      try {
-        const img = docPip.document.getElementById(DOC_PIP_ART_ID);
-        if (img && img.tagName === 'IMG') {
-          img.src = nextArt;
+    if (docPip && !docPip.closed) {
+      const docArt =
+        (await waitForAlbumArtChange(lastPipArtUrl, 2000)) || getAlbumArtUrl();
+      if (docArt) {
+        try {
+          const img = docPip.document.getElementById(DOC_PIP_ART_ID);
+          if (img && img.tagName === 'IMG') {
+            img.src = docArt;
+            lastPipArtUrl = docArt;
+          }
+        } catch (_) {
+          /* ignore */
         }
-      } catch (_) {
-        /* ignore */
       }
     }
   }
@@ -1116,9 +1355,10 @@
     }
 
     lastPipCanvasMetrics = metrics;
-    await drawAlbumArtOnCanvas(canvas, artUrl, metrics);
+    const painted = await drawAlbumArtOnCanvas(canvas, artUrl, metrics);
+    if (!painted) throw new Error('cover_paint_failed');
+    lastPipArtUrl = artUrl;
 
-    const stream = canvas.captureStream();
     let pipVideo = document.getElementById(PIP_CANVAS_VIDEO_ID);
     if (!pipVideo) {
       pipVideo = document.createElement('video');
@@ -1130,9 +1370,17 @@
       document.documentElement.appendChild(pipVideo);
     }
 
-    pipVideo.srcObject = stream;
+    // Reuse live canvas stream when possible — rebinding srcObject flashes black in PiP.
+    const streamLive =
+      pipVideo.srcObject instanceof MediaStream &&
+      pipVideo.srcObject.getVideoTracks().some((t) => t.readyState === 'live');
+    if (!streamLive) {
+      pipVideo.srcObject = canvas.captureStream(30);
+    }
     prepareVideoForPip(pipVideo);
     await pipVideo.play();
+    // Let captureStream emit the painted frame before swapping into PiP.
+    await waitMs(40);
 
     // Prefer swap when PiP is already open (track-change pathways; no user gesture).
     if (document.pictureInPictureElement && document.pictureInPictureElement !== pipVideo) {

@@ -1,48 +1,39 @@
-# PC drive layout (companion note)
+﻿# PC drive layout
 
-## System Maintenance (your toolkit)
+## Projects root
+
+`D:\Projects` — personal work (not under `D:\STUDIS` studies).
+
+| Folder | What |
+| :--- | :--- |
+| `portfolio/` | Portfolio site (`Nkr`) |
+| `business/` | Home Business (arecanut-market, Areca ERP) |
+| `apps/` | Product apps (HappyJourney, nyayasakhi-ai) |
+| `learning/` | Small practice projects |
+| `academic/` | College docs / reports |
+| `tools/` | System Maintenance, Windhawk, ffmpeg |
+
+## System Maintenance (single copy)
 
 | Role | Path |
 | :--- | :--- |
-| **Live install** (real files, storage on D:) | `D:\Tools\SystemMaintenance` |
-| **Registered path** (desktop menu / scripts / Windhawk) | `C:\SystemMaintenance` → junction to the live install |
-| **GitHub project** (sanitized public repo) | `D:\STUDIS\project\windows-system-maintenance` → [Nishanth1409/windows-system-maintenance](https://github.com/Nishanth1409/windows-system-maintenance) |
+| Live + GitHub working tree | `D:\Projects\tools\SystemMaintenance` |
+| Registered | `C:\SystemMaintenance` → junction |
+| GitHub | https://github.com/Nishanth1409/windows-system-maintenance |
 
-Hardcoded paths still say `C:\SystemMaintenance` — that is correct. Windows follows the junction to **D:**, so storage grows on D:, not C:. Do **not** rewrite script paths unless you also re-import the desktop menu `.reg`.
+No second `windows-system-maintenance` folder. No Windhawk files inside this repo.
 
-Machine-only bits (`app/`, `logs/`, binaries, `_AgentSessionData.json`) stay in the **live** folder only; the GitHub repo stays sanitized.
+## Windhawk (single copy)
 
-## Classification
-
-### System / OEM (leave on C:)
-
-`Windows`, `Users`, `Program Files`, `Program Files (x86)`, `ProgramData`, `PerfLogs`, `Recovery`, `inetpub`, `Dell`, `XboxGames`, `OneDriveTemp`, recycle/system volume metadata, pagefile/swapfile.
-
-### Junctions (path on C:, data on D:)
-
-| Visible path | Real location |
+| Role | Path |
 | :--- | :--- |
-| `C:\SystemMaintenance` | `D:\Tools\SystemMaintenance` |
-| `C:\ffmpeg` | `D:\Tools\ffmpeg` |
-| `C:\Riot Games` | `D:\Games\Riot Games` |
+| Local + GitHub | `D:\Projects\tools\windhawk-mods` |
+| GitHub | https://github.com/Nishanth1409/windhawk-mods |
 
-### D: categories
+## Other
 
-```
-D:\Media\          Movies, Photography, Video
-D:\Personal\       My_Details
-D:\Dev\            protorev
-D:\Cache\          app/cache leftovers
-D:\Tools\          ffmpeg, SystemMaintenance (+ misc)
-D:\Games\          Riot Games (+ XboxGames junction)
-D:\STUDIS\         college / coding projects
-```
-
-Compat junctions on D: root (old names): `Movies`, `Photography`, `video`, `MY ditails`, `protorev`.
-
-Live map on PC: `D:\Tools\DRIVE_LAYOUT.txt`.
-
-## PATH
-
-- User PATH uses `D:\Tools\ffmpeg\bin`.
-- `C:\ffmpeg\bin` may still appear in Machine PATH; the `C:\ffmpeg` junction keeps those entries working.
+| Item | Path |
+| :--- | :--- |
+| ffmpeg | `D:\Projects\tools\ffmpeg` (`C:\ffmpeg` junction) |
+| Studies | `D:\STUDIS` (JAIN, PESITM only) |
+| Riot | `D:\Games\Riot Games` |

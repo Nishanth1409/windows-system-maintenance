@@ -1,4 +1,4 @@
-# Exclude local/personal artifacts from the public toolkit mirror
+﻿# Machine-only / local artifacts (live PC install)
 logs/
 PortablePackage/
 tools/
@@ -12,3 +12,6 @@ RAMMap64.exe
 node_modules/
 .DS_Store
 Thumbs.db
+
+# Windhawk lives in sibling repo windhawk-mods — never store a second copy here
+windhawk/
