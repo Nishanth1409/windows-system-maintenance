@@ -2,13 +2,17 @@
 
 Personal **Windows maintenance toolkit** by [Nishanth K R](https://github.com/Nishanth1409) — desktop context-menu launchers, PowerShell cleanup/update/security helpers, App Group utilities, and Chrome extension notes.
 
-> Source maintained locally at `C:\SystemMaintenance`. This public repo is a **sanitized** publish of scripts and docs (no logs, portable binaries, or machine-only dumps).
+> Live toolkit path used by scripts/menu: `C:\SystemMaintenance` (junction → `D:\Tools\SystemMaintenance`, so files/storage sit on **D:**). This public repo is a **sanitized** publish (no logs, portable binaries, or machine-only dumps).
+
+**Layout:** registered path stays `C:\SystemMaintenance`; real files + storage on D:. Details: [`DRIVE_LAYOUT.md`](./DRIVE_LAYOUT.md).
 
 ## Quick start
 
-1. Clone this repository (or keep using your local `C:\SystemMaintenance` folder).
+1. Clone this repository (example local clone path on this PC: `D:\STUDIS\project\tools\windows-system-maintenance`), **or** keep using the live install at `C:\SystemMaintenance`.
 2. Run `Install_Menu.bat` **as Administrator** to install the desktop right-click **System Maintenance** menu (Windows 11: *Show more options*).
 3. Read [`GUIDE.md`](./GUIDE.md) for the full command reference.
+
+**Note:** Moving the clone folder on disk does **not** require cloning again. Git remotes stay the same; only the local path changes.
 
 ## Layout
 
