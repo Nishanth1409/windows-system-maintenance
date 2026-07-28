@@ -1,11 +1,13 @@
 ﻿# Windows System Maintenance
 
-Personal **Windows maintenance toolkit** by [Nishanth K R](https://github.com/Nishanth1409) — desktop context-menu launchers, PowerShell cleanup/update/security helpers, App Group utilities, and Chrome extension notes.
+Personal **Windows maintenance toolkit** by [Nishanth K R](https://github.com/Nishanth1409) — desktop context-menu launchers, PowerShell cleanup/update/security helpers, and App Group utilities.
 
 > **One folder only:** live install = this repo working tree at `D:\Projects\tools\SystemMaintenance`.  
 > Registered path: `C:\SystemMaintenance` (junction → that folder).
 
-**Windhawk mods are not in this repo.** They live in [`windhawk-mods`](https://github.com/Nishanth1409/windhawk-mods) (`D:\Projects\tools\windhawk-mods`).
+**Not in this repo:**
+- Windhawk mods → [`windhawk-mods`](https://github.com/Nishanth1409/windhawk-mods)
+- Chrome extensions → [`youtube-music-float-dock`](https://github.com/Nishanth1409/youtube-music-float-dock) (`D:\Projects\extensions\`)
 
 Details: [`DRIVE_LAYOUT.md`](./DRIVE_LAYOUT.md).
 
@@ -22,13 +24,13 @@ Details: [`DRIVE_LAYOUT.md`](./DRIVE_LAYOUT.md).
 | `scripts/` | PowerShell maintenance scripts |
 | `icons/` | Menu / UI icons |
 | `AppGroup/` | App grouping helpers |
-| `chrome-extensions/` | Extension helpers/docs |
 | `*.bat` / `*.reg` | Installers and desktop menu |
 | `GUIDE.md` | Full usage guide |
 
 ## Related
 
 - Windhawk: [Nishanth1409/windhawk-mods](https://github.com/Nishanth1409/windhawk-mods)
+- Chrome extension: [Nishanth1409/youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock)
 
 ## Author
 

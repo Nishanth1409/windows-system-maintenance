@@ -1,7 +1,8 @@
 # System Maintenance — Complete Guide
 
 **Folder:** `C:\SystemMaintenance\`  
-**Layout:** `scripts\` · `tools\` · `chrome-extensions\` · `windhawk\` · `AppGroup\` · `app\` · `icons\` · `logs\`  
+**Layout:** `scripts\` · `tools\` · `AppGroup\` · `app\` · `icons\` · `logs\`  
+**(Chrome extensions and Windhawk are separate projects under `D:\Projects`.)**  
 **Menu:** Desktop right-click → **Show more options** (Windows 11) → **System Maintenance**  
 **Install menu:** `Install_Menu.bat`  
 **Last updated:** 21 July 2026 (Alienware keyboard / AlienFX lighting facts)
@@ -887,30 +888,28 @@ Full inventory (names, folders, purpose): see that repo’s `README.md`. Windhaw
 
 System Maintenance **does not** auto-update or reset Windhawk mods. Use **Fix Slow Explorer** after enabling Explorer mods.
 
-### 14.2 YouTube Music Float Dock (`chrome-extensions\youtube-music-audio-only\`)
+### 14.2 YouTube Music Float Dock (separate project)
+
+**Not part of System Maintenance.** Lives at:
+
+- Local: `D:\Projects\extensions\youtube-music-float-dock`
+- GitHub: [Nishanth1409/youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock)
 
 **Version:** 1.21.9 — Chrome unpacked extension  
-**Docs:** `chrome-extensions\youtube-music-audio-only\README.md` + `PRIVACY.md`
+**Docs:** that folder’s `README.md` + `PRIVACY.md`
 
 | Feature | Detail |
 |---------|--------|
 | Float dock | F11, maximize, minimize, PiP, random from local history |
 | HQ mode | Highest quality playback; does not hide video |
-| Install | Chrome → Extensions → Load unpacked → select `chrome-extensions\youtube-music-audio-only` |
+| Install | Chrome → Extensions → Load unpacked → select `D:\Projects\extensions\youtube-music-float-dock` |
 | App Group | YouTube Music PWA in **Relax** group |
 
 Reload extension after folder changes; refresh `music.youtube.com` tab.
 
-### 14.3 Google One Image Tools (`chrome-extensions\google-one-image-tools\`)
+### 14.3 Other Chrome extensions
 
-**Version:** 1.0.0 — Chrome unpacked extension (side panel)  
-**Docs:** `chrome-extensions\google-one-image-tools\README.md`
-
-| Feature | Detail |
-|---------|--------|
-| Image downloader | Scan page images, filter, bulk download (Imageye-style) |
-| Watermark remover | Local brush + inpainting preview (WatermarkRemover.io-style) |
-| Install | Chrome → Extensions → Load unpacked → select `chrome-extensions\google-one-image-tools` |
+Additional Chrome extensions (if any) also belong under `D:\Projects\extensions\`, not inside System Maintenance.
 
 ---
 
