@@ -2,7 +2,7 @@
 
 **Folder:** `C:\SystemMaintenance\`  
 **Layout:** `scripts\` · `tools\` · `AppGroup\` · `app\` · `icons\` · `logs\`  
-**(Chrome extensions and Windhawk are separate projects under `D:\Projects`.)**  
+**(Chrome extensions and Windhawk are separate GitHub projects — not stored in this folder.)**  
 **Menu:** Desktop right-click → **Show more options** (Windows 11) → **System Maintenance**  
 **Install menu:** `Install_Menu.bat`  
 **Last updated:** 21 July 2026 (Alienware keyboard / AlienFX lighting facts)
@@ -436,9 +436,9 @@ C:\SystemMaintenance\
 ```
 
 **Not in this folder (separate projects):**
-- Chrome extensions → `D:\Projects\extensions\`
-- Windhawk → `D:\Projects\tools\windhawk-mods`
-- VLC folder audio → `D:\Projects\tools\vlc-folder-audio`
+- Chrome extensions → [youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock)
+- Windhawk → [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods)
+- VLC folder audio → [vlc-folder-audio](https://github.com/Nishanth1409/vlc-folder-audio)
 
 | File / folder | Purpose |
 |------|---------|
@@ -881,9 +881,9 @@ Add any of these in the App Group app, then run `tools\_SyncFromLiveAppGroup.ps1
 
 **App:** Windhawk — `C:\Program Files\Windhawk\windhawk.exe`  
 **Live data:** `C:\ProgramData\Windhawk` (ModsSource + `HKLM\SOFTWARE\Windhawk\Engine\Mods`)  
-**Docs / local mods repo:** `D:\Projects\tools\windhawk-mods` (GitHub: [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods)) → `analysis\` (40 installed mods).
+**Docs / mods repo:** [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods) → `analysis\` (curated mod sources).
 
-Full inventory (names, folders, purpose): see that repo’s `README.md`. Windhawk is **not** stored inside System Maintenance.
+Full inventory: see that repo’s `README.md`. Windhawk sources are **not** stored inside System Maintenance.
 
 **Layout:** one folder per installed mod under `windhawk\analysis\<mod-id>\` with current source (`.cpp` / `.wh.cpp`), settings JSON, and matching `.bak`. Examples: Tray Audio Output, Mic Tray Switch, Custom Menu Height, Taskbar Auto-Hide Peek, Lock Screen / Per-Monitor Wallpaper, stylers (Explorer / Start / Settings / Taskbar / Notification Center).
 
@@ -891,26 +891,23 @@ System Maintenance **does not** auto-update or reset Windhawk mods. Use **Fix Sl
 
 ### 14.2 YouTube Music Float Dock (separate project)
 
-**Not part of System Maintenance.** Lives at:
+**Not part of System Maintenance.** See the dedicated repo:
 
-- Local: `D:\Projects\extensions\youtube-music-float-dock`
 - GitHub: [Nishanth1409/youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock)
 
-**Version:** 1.21.9 — Chrome unpacked extension  
-**Docs:** that folder’s `README.md` + `PRIVACY.md`
+Clone that repo and **Load unpacked** in Chrome from the folder that contains `manifest.json`.
 
 | Feature | Detail |
 |---------|--------|
 | Float dock | F11, maximize, minimize, PiP, random from local history |
 | HQ mode | Highest quality playback; does not hide video |
-| Install | Chrome → Extensions → Load unpacked → select `D:\Projects\extensions\youtube-music-float-dock` |
-| App Group | YouTube Music PWA in **Relax** group |
+| App Group | Optional: put YouTube Music PWA in a Relax/focus group |
 
-Reload extension after folder changes; refresh `music.youtube.com` tab.
+Reload the extension after code changes; refresh the Music tab.
 
 ### 14.3 Other Chrome extensions
 
-Additional Chrome extensions (if any) also belong under `D:\Projects\extensions\`, not inside System Maintenance.
+Additional Chrome extensions belong in their own repos / folders — not inside System Maintenance.
 
 ---
 

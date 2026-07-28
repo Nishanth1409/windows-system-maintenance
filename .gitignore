@@ -4,6 +4,7 @@ PortablePackage/
 tools/
 app/
 .vscode/
+.cursor/
 *.lnk
 *_AgentSessionData.json
 RAMMap64.exe
@@ -13,9 +14,11 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Windhawk / Chrome / VLC are separate projects — never store second copies here
+# Machine layout notes (not for public clone docs)
+DRIVE_LAYOUT.md
+DRIVE_LAYOUT.txt
+
+# Separate projects — never store second copies here
 windhawk/
 chrome-extensions/
 vlc/
-
-.cursor/
