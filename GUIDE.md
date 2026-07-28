@@ -24,7 +24,7 @@
 11. [Technical reference](#11-technical-reference)
 12. [Change log](#12-change-log)
 13. [App Group taskbar](#13-app-group-taskbar)
-14. [Windhawk mods & YouTube Music extension](#14-windhawk-mods--youtube-music-extension)
+14. [Related projects (Windhawk / Chrome / VLC — not in this folder)](#14-windhawk-mods--youtube-music-extension)
 
 ---
 
@@ -428,16 +428,17 @@ C:\SystemMaintenance\
 ├── Apply_StartButton_Matter.bat
 ├── scripts\                    # Maintenance PowerShell (menu targets)
 ├── tools\                      # Internal helpers + audits (_*.ps1)
-├── chrome-extensions\          # Unpacked Chrome extensions
-│   ├── google-one-image-tools\
-│   └── youtube-music-audio-only\
-├── windhawk\                   # Windhawk mod sources + docs
 ├── AppGroup\                   # Taskbar group plans + ungrouped lists
-├── app\                        # Portable shortcuts/exes for App Group
+├── app\                        # RAMMap + portable shortcuts for App Group
 ├── icons\                      # NVIDIA, Start button, File Explorer icons
 ├── logs\                       # RAMMap_Empty.log
 └── PortablePackage\            # Copy for another PC
 ```
+
+**Not in this folder (separate projects):**
+- Chrome extensions → `D:\Projects\extensions\`
+- Windhawk → `D:\Projects\tools\windhawk-mods`
+- VLC folder audio → `D:\Projects\tools\vlc-folder-audio`
 
 | File / folder | Purpose |
 |------|---------|
