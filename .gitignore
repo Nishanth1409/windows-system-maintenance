@@ -13,7 +13,9 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# Windhawk lives in sibling repo windhawk-mods — never store a second copy here
+# Windhawk / Chrome / VLC are separate projects — never store second copies here
 windhawk/
+chrome-extensions/
+vlc/
 
 .cursor/
