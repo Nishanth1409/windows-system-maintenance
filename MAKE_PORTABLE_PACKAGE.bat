@@ -3,7 +3,8 @@ setlocal EnableExtensions
 title System Maintenance - Make Portable Package
 color 0E
 
-set "SRC=C:\SystemMaintenance"
+set "SRC=%~dp0"
+if "%SRC:~-1%"=="\" set "SRC=%SRC:~0,-1%"
 set "OUT=%SRC%\PortablePackage\SystemMaintenance_Setup"
 
 echo.

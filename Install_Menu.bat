@@ -21,12 +21,20 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Extract_NV
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Extract_FileExplorer_Icon.ps1"
 echo.
 echo  [2/3] Applying registry...
-reg import "%~dp0Add_Desktop_Menu.reg"
+set "GENREG=%TEMP%\SM_Add_Desktop_Menu.reg"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Build_DesktopMenuReg.ps1" -Root "%~dp0." -OutFile "%GENREG%"
+if errorlevel 1 (
+    echo  ERROR: Could not build the menu registry for this folder.
+    pause
+    exit /b 1
+)
+reg import "%GENREG%"
 if errorlevel 1 (
     echo  ERROR: Registry import failed.
     pause
     exit /b 1
 )
+del "%GENREG%" >nul 2>&1
 echo.
 echo  [3/3] Hiding NVIDIA duplicate desktop menu entries...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_HideNvidiaDesktopMenu.ps1" -Silent -Elevated

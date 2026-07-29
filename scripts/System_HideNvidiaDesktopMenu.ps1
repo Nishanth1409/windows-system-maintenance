@@ -2,7 +2,8 @@
 param(
     [switch]$Silent,
     [switch]$Elevated,
-    [switch]$CheckOnly
+    [switch]$CheckOnly,
+    [switch]$NoExplorerRestart
 )
 
 $handlerNames = @(
@@ -17,6 +18,41 @@ $handlerRoots = @(
     'HKLM:\SOFTWARE\Classes\Directory\Background\shellex\ContextMenuHandlers',
     'HKLM:\SOFTWARE\Classes\DesktopBackground\shellex\ContextMenuHandlers'
 )
+
+$shellRoots = @(
+    'Registry::HKEY_CLASSES_ROOT\DesktopBackground\Shell',
+    'HKLM:\SOFTWARE\Classes\DesktopBackground\Shell'
+)
+
+function Test-NvidiaShellEntry {
+    param([string]$Name)
+
+    if ($Name -eq 'Perz_02_NVIDIA') { return $false }
+    return ($Name -match '^(Nv|NVIDIA)' -or $Name -like '*NvCpl*' -or $Name -like '*NvApp*')
+}
+
+# Snapshot of every entry this script would delete, so the caller can diff
+# before/after. The elevated pass runs in a child process, so counting
+# deletions inline under-reports whenever elevation was required.
+function Get-NvidiaDesktopEntries {
+    $found = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($root in $handlerRoots) {
+        if (-not (Test-Path $root)) { continue }
+        Get-ChildItem -LiteralPath $root -ErrorAction SilentlyContinue |
+            Where-Object { $_.PSChildName -like 'Nv*' -and $_.PSChildName -notlike '*.disabled' } |
+            ForEach-Object { $found.Add(($root -replace '.*\\', '') + '\' + $_.PSChildName) | Out-Null }
+    }
+
+    foreach ($shellRoot in $shellRoots) {
+        if (-not (Test-Path $shellRoot)) { continue }
+        Get-ChildItem -LiteralPath $shellRoot -ErrorAction SilentlyContinue |
+            Where-Object { Test-NvidiaShellEntry $_.PSChildName } |
+            ForEach-Object { $found.Add('Shell\' + $_.PSChildName) | Out-Null }
+    }
+
+    return @($found | Select-Object -Unique)
+}
 
 function Test-NvidiaDesktopHandlersPresent {
     foreach ($root in $handlerRoots) {
@@ -57,18 +93,10 @@ function Remove-NvidiaDesktopHandlers {
             }
     }
 
-    $shellRoots = @(
-        'Registry::HKEY_CLASSES_ROOT\DesktopBackground\Shell',
-        'HKLM:\SOFTWARE\Classes\DesktopBackground\Shell'
-    )
     foreach ($shellRoot in $shellRoots) {
         if (-not (Test-Path $shellRoot)) { continue }
         Get-ChildItem -LiteralPath $shellRoot -ErrorAction SilentlyContinue |
-            Where-Object {
-                $n = $_.PSChildName
-                if ($n -eq 'Perz_02_NVIDIA') { return $false }
-                return ($n -match '^(Nv|NVIDIA)' -or $n -like '*NvCpl*' -or $n -like '*NvApp*')
-            } |
+            Where-Object { Test-NvidiaShellEntry $_.PSChildName } |
             ForEach-Object {
                 try {
                     Remove-Item -LiteralPath $_.PSPath -Force -Recurse -ErrorAction Stop
@@ -87,22 +115,30 @@ if ($CheckOnly) {
     }
 }
 
-$removedItems = Remove-NvidiaDesktopHandlers
+$before = Get-NvidiaDesktopEntries
+
+Remove-NvidiaDesktopHandlers | Out-Null
 
 if ((Test-NvidiaDesktopHandlersPresent) -and -not $Elevated) {
     $self = Join-Path $PSScriptRoot 'System_HideNvidiaDesktopMenu.ps1'
+    # The child runs as admin in its own session context; this process owns the
+    # single Explorer restart once the diff below is known.
     Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @(
-        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $self, '-Silent', '-Elevated'
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $self,
+        '-Silent', '-Elevated', '-NoExplorerRestart'
     ) -Wait -WindowStyle Hidden | Out-Null
-    $removedItems = @($removedItems + (Remove-NvidiaDesktopHandlers) | Select-Object -Unique)
+    Remove-NvidiaDesktopHandlers | Out-Null
 }
+
+$after = Get-NvidiaDesktopEntries
+$removedItems = @($before | Where-Object { $after -notcontains $_ })
 
 $result = [PSCustomObject]@{
     Removed      = $removedItems
     StillPresent = (Test-NvidiaDesktopHandlersPresent)
 }
 
-if ($result.Removed.Count -gt 0 -and -not $CheckOnly) {
+if ($result.Removed.Count -gt 0 -and -not $NoExplorerRestart) {
     . (Join-Path $PSScriptRoot 'System_RestartExplorerCore.ps1')
     Restart-ExplorerSafe -WaitSeconds 4 | Out-Null
 }

@@ -19,7 +19,7 @@ Desktop **right-click menu** + PowerShell helpers for Windows cleanup, updates, 
 | **Intermediate** | Admin + user maintenance scripts, Spicetify reapply |
 | **Pro** | App Groups, portable package, custom icons, full `GUIDE.md` |
 
-Scripts assume an install folder named **`SystemMaintenance`** at the drive root used in the `.reg` menu (default: `C:\SystemMaintenance`). If you clone elsewhere, edit paths in `Add_Desktop_Menu.reg` before importing.
+The toolkit runs from wherever you put it, on any drive. `Install_Menu.bat` rewrites the menu registry to match its own location, so no path editing is needed. `Add_Desktop_Menu.reg` ships `C:\SystemMaintenance` only as a placeholder. If you move the folder, re-run `Install_Menu.bat`.
 
 ---
 
@@ -34,11 +34,11 @@ Scripts assume an install folder named **`SystemMaintenance`** at the drive root
 ```bash
 git clone https://github.com/Nishanth1409/windows-system-maintenance.git SystemMaintenance
 ```
-Place/rename the folder so menu paths match (recommended: `C:\SystemMaintenance`).
+Put the folder anywhere you like — the menu adapts to its location.
 
 ### 3. Install the desktop menu
 1. Right-click `Install_Menu.bat` → **Run as administrator**  
-   (or: `reg import Add_Desktop_Menu.reg` as admin)
+   (it generates the menu registry for the current folder, then imports it)
 2. On Windows 11: desktop → right-click → **Show more options** → **System Maintenance**
 
 ### 4. Optional tools
@@ -50,8 +50,8 @@ Place/rename the folder so menu paths match (recommended: `C:\SystemMaintenance`
 
 | Goal | Action |
 | :--- | :--- |
-| Quick clean | Menu → Quick Clean |
-| Free disk space | Menu → Free Space / Clean Drive |
+| Quick clean | Menu → Quick Clean (Windows temp + `D:\Cache`; personal data protected) |
+| Free disk space | Menu → Free Space / Clean Drive (also prunes approved D: package/project caches) |
 | Windows update | Menu → Update Windows |
 | App updates (winget) | Menu → Update Apps |
 | Full pass | Menu → Full Maintenance (`System_AllInOne.bat`) |
@@ -71,16 +71,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\System_QuickClean.
 | `Add_Desktop_Menu.reg` / `Install_Menu.bat` | Context menu |
 | `System_*.bat` | Menu launchers |
 | `scripts\` | PowerShell maintenance |
-| `icons\` | Menu icons |
+| `icons\` | Menu, Start button, File Explorer icons |
 | `AppGroup\` | Taskbar app-group plans |
 | `GUIDE.md` | Full reference |
+
+---
+
+## Optional custom icons
+
+| Goal | Script | Assets |
+| :--- | :--- | :--- |
+| Custom **File Explorer** icon (taskbar / Start / desktop shortcuts) | `scripts\Extract_FileExplorer_Icon.ps1` | `icons\file_explorer.ico` (built from `file_explorer_256.png`) |
+| Custom **Start button** (Windhawk taskbar styler + Matter theme) | `scripts\Apply_StartButton_Matter.ps1` | `icons\Start.png` |
+
+These scripts derive paths from the toolkit folder. After you **move** the folder, re-run the icon scripts (and `Install_Menu.bat`) so shortcuts and Windhawk settings keep working.
 
 ---
 
 ## Pro tips
 
 1. Read **`GUIDE.md`** before changing admin scripts.  
-2. Re-run `Install_Menu.bat` after editing the `.reg`.  
+2. Re-run `Install_Menu.bat` after editing the `.reg` or moving this folder.  
 3. Keep machine-only binaries and logs out of git (`app\`, `logs\` are ignored).  
 4. Build a USB copy with `MAKE_PORTABLE_PACKAGE.bat` for another PC.
 

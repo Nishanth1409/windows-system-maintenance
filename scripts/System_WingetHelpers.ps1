@@ -690,9 +690,8 @@ function Start-WingetUpgradeSession {
     $scopeLabel = if ($Scope -eq 'machine') { 'Administrator (machine-wide)' } else { 'User (per-user)' }
     $wantElevation = $Elevate -and -not (Test-IsAdministrator)
     $packages = Get-WingetUpgradeList -Scope $Scope
-    $repairNotes = @()
     if ($packages.Count -gt 0) {
-        $repairNotes = Repair-WingetPackagesBeforeUpgrade -Packages $packages
+        $null = Repair-WingetPackagesBeforeUpgrade -Packages $packages
         $packages = Get-WingetUpgradeList -Scope $Scope
     }
     $logFile = Join-Path $env:TEMP ("winget-$Scope-{0:yyyyMMddHHmmss}.log" -f (Get-Date))

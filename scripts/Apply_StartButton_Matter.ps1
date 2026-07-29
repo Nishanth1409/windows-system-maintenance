@@ -14,7 +14,7 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 $modKey = 'HKLM:\SOFTWARE\Windhawk\Engine\Mods\windows-11-taskbar-styler'
 $settingsKey = "$modKey\Settings"
 $windhawkExe = 'C:\Program Files\Windhawk\windhawk.exe'
-$imgPath = 'C:\SystemMaintenance\icons\Start.png'
+$imgPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'icons\Start.png'
 if (-not (Test-Path -LiteralPath $imgPath)) {
     throw "Missing image: $imgPath"
 }

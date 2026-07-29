@@ -8,7 +8,7 @@ echo  ========================================
 echo.
 
 echo [1/7] Removing old Windows files (fast cleanup)...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\SystemMaintenance\scripts\System_WindowsJunk.ps1" -Level Admin -Silent -ShowProgress -NoDism
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_WindowsJunk.ps1" -Level Admin -Silent -ShowProgress -NoDism
 echo        Step 1 done.
 echo.
 
@@ -43,7 +43,7 @@ echo        NOTE: Reboot after Full Maintenance for winsock reset to apply.
 echo.
 
 echo [7/7] Updating machine-wide apps (Administrator winget)...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\SystemMaintenance\scripts\System_WingetAdmin.ps1" -Silent
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_WingetAdmin.ps1" -Silent
 echo        Step 7 done. User updates run next (not in admin).
 echo.
 

@@ -86,7 +86,7 @@ function Install-OfficialSpotifyDesktop {
     }
 }
 
-function Ensure-SpicetifyOnPath {
+function Resolve-SpicetifyOnPath {
     if (Get-Command spicetify -ErrorAction SilentlyContinue) { return $true }
     $local = Join-Path $env:LOCALAPPDATA 'spicetify\spicetify.exe'
     if (Test-Path $local) {
@@ -119,7 +119,7 @@ function Install-OfficialSpicetifyCli {
         }
     }
 
-    if (-not (Ensure-SpicetifyOnPath)) {
+    if (-not (Resolve-SpicetifyOnPath)) {
         return [PSCustomObject]@{
             Status  = 'Failed'
             Message = 'Spicetify install script finished but spicetify command was not found.'
@@ -134,7 +134,7 @@ function Install-OfficialSpicetifyCli {
 
 function Invoke-SpicetifyCommand {
     param([string[]]$CommandArgs)
-    if (-not (Ensure-SpicetifyOnPath)) {
+    if (-not (Resolve-SpicetifyOnPath)) {
         return [PSCustomObject]@{ ExitCode = 1; Output = 'spicetify not found' }
     }
     # Pipe yes/y so CLI prompts never block hidden menu PowerShell.

@@ -36,7 +36,7 @@ if ($AfterAppUpdate -and -not $SpotifyUpdated) {
     return $result
 }
 
-if ((Ensure-SpicetifyOnPath) -and -not $Force -and -not $AfterAppUpdate) {
+if ((Resolve-SpicetifyOnPath) -and -not $Force -and -not $AfterAppUpdate) {
     if (-not $Silent) {
         [System.Windows.Forms.MessageBox]::Show(
             "Spicetify is already installed.`n`nUse System Maintenance → As needed → Update Spicetify.",
@@ -46,7 +46,7 @@ if ((Ensure-SpicetifyOnPath) -and -not $Force -and -not $AfterAppUpdate) {
     return $result
 }
 
-if ($AfterAppUpdate -and $SpotifyUpdated -and (Ensure-SpicetifyOnPath)) {
+if ($AfterAppUpdate -and $SpotifyUpdated -and (Resolve-SpicetifyOnPath)) {
     $reapply = Join-Path $PSScriptRoot 'System_ReapplySpicetify.ps1'
     if (Test-Path $reapply) {
         & $reapply -Silent | Out-Null

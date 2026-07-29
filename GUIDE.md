@@ -1,6 +1,6 @@
 # System Maintenance — Complete Guide
 
-**Folder:** `C:\SystemMaintenance\`  
+**Folder:** `D:\Projects\tools\SystemMaintenance\` — runs from anywhere; re-run `Install_Menu.bat` after moving it  
 **Layout:** `scripts\` · `tools\` · `AppGroup\` · `app\` · `icons\` · `logs\`  
 **(Chrome extensions and Windhawk are separate GitHub projects — not stored in this folder.)**  
 **Menu:** Desktop right-click → **Show more options** (Windows 11) → **System Maintenance**  
@@ -43,7 +43,7 @@
 **Rule of thumb:** Light tasks **weekly**, deeper cleanup **monthly**, admin repair **every 1–2 months**.
 
 ```bat
-C:\SystemMaintenance\Install_Menu.bat
+D:\Projects\tools\SystemMaintenance\Install_Menu.bat
 ```
 
 ---
@@ -117,9 +117,9 @@ Each label is prefixed with how often to run it.
 | # | Menu label | Runs as | What it does |
 |---|------------|---------|--------------|
 | 1 | Weekly — Software Checkup (All) | User | Win Update + security scan + optional app update |
-| 2 | Weekly — Quick Clean | User | `%TEMP%`, user/Windows temp, prefetch, recycle bin |
+| 2 | Weekly — Quick Clean | User | Windows temp/prefetch + `D:\Cache` + recycle bin |
 | 3 | Weekly — Update Windows | User | Windows Update scan + Settings |
-| 4 | Monthly — Free Disk Space | User | C:\ root junk + deep Windows junk (no install caches) |
+| 4 | Monthly — Free Disk Space | User | C: system junk + approved D: package/project caches |
 | 5 | Monthly — Update All Apps | Admin→User | Admin winget → User winget → Chocolatey |
 | 5b | As needed — Update Spotify + Spicetify | User | Spotify from `download.scdn.co/SpotifySetup.exe`, then Spicetify `iwr \| iex` + re-apply |
 | 6 | Monthly — Security Quick Scan | User | Defender quick scan (background) |
@@ -128,13 +128,13 @@ Each label is prefixed with how often to run it.
 | 9 | As needed — RAM Map Empty | **Admin** | `RAMMap64.exe` — all 5 Empty actions in one click |
 | 10 | 1-2 Months — Full Maintenance (Admin) | Admin→User | DISM/SFC + deepest junk + admin winget, then user tasks |
 
-\* **Free Disk Space** — also run anytime `C:\` is below ~20 GB free.
+\* **Free Disk Space** — also run when C: is below ~20 GB free or D: is below ~15% free.
 
 ### 3.1 RAM Map Empty — run order
 
 **Script:** `System_EmptyRAM.bat` (menu launches directly; self-elevates via UAC)  
-**Tool:** `C:\SystemMaintenance\app\RAMMap64.exe` (Sysinternals v1.63)  
-**Log:** `C:\SystemMaintenance\logs\RAMMap_Empty.log`
+**Tool:** `D:\Projects\tools\SystemMaintenance\app\RAMMap64.exe` (Sysinternals v1.63)  
+**Log:** `D:\Projects\tools\SystemMaintenance\logs\RAMMap_Empty.log`
 
 | Step | Flag | Action |
 |------|------|--------|
@@ -195,7 +195,7 @@ Monthly — Update All Apps
         │     Windows junk (Admin) + DISM + SFC + DNS + winsock + Admin winget
         │
         └─► System_User.ps1 (normal user)
-              User winget + temp/prefetch cleanup
+              User winget + Windows temp/prefetch + D:\Cache cleanup
 ```
 
 ### 4.4 Full flow diagram
@@ -230,6 +230,9 @@ Shared logic: `System_MaintenanceProtect.ps1` → `Invoke-MaintenanceStandardCle
 | `%TEMP%` / `%LocalAppData%\Temp` | Yes |
 | `C:\Windows\Temp` | Yes |
 | `C:\Windows\Prefetch` | Yes (locked files skipped) |
+| `D:\Cache` contents | Yes (the root folder is kept) |
+| `D:\.pnpm-store` | **No** — monthly/deep cleanup only |
+| Project build/dependency folders | **No** |
 | Recycle bin | Yes |
 | Clipboard history (Win+V) | **No** |
 | Thumbnail/icon cache | **No** |
@@ -242,10 +245,25 @@ Quick Clean does **not** call `System_WindowsJunk.ps1`.
 
 | Level | Triggered by | Examples removed |
 |-------|--------------|------------------|
-| Deep | Free Disk Space, Full Maintenance (user) | Temp + prefetch (above), upgrade leftovers, old logs 30+ days, `Windows.old` if 14+ days |
+| Deep | Free Disk Space, Full Maintenance | Temp + prefetch, upgrade leftovers, old logs, `Windows.old` if 14+ days, `D:\.pnpm-store`, and strictly allowlisted generated project caches |
 | Admin | Full Maintenance (admin) | Minidumps, kernel reports, `Config.Msi`, DISM component cleanup |
 
-**Never deleted:** installed apps, games, documents, project folders (`C:\xampp`, `C:\Apps`, etc.).
+**Never deleted:** Movies, Games, STUDIS, Personal, Dev, project source, `node_modules`, `.venv`, `dist`, `build`, installed apps, or documents.
+
+### 5.2.1 D: cleanup safety boundary
+
+The D: cleaner does not search for arbitrary “unwanted” files. It uses a strict allowlist:
+
+| D: path/type | Policy |
+|---|---|
+| `D:\Cache` | Contents cleared by Quick Clean and deeper cleanup |
+| `D:\.pnpm-store` | Cleared only by Free Disk Space / Deep / Full Maintenance; pnpm downloads packages again if needed |
+| `.next\cache`, `__pycache__`, `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.turbo`, `.cache` under `D:\Projects` | Cleared only by deep cleanup |
+| Junctions/reparse points | Always skipped |
+| `.git`, `node_modules`, `.venv`, `venv` trees | Never entered |
+| `.next` itself, `dist`, `build` | Kept |
+
+First verified run removed **1,488.2 MB** from approved D: caches with zero skipped items. All 725 `node_modules` folders and both virtual environments remained unchanged.
 
 ### 5.3 Performance rules — do NOT break
 
@@ -337,7 +355,7 @@ Quick Clean does **not** call `System_WindowsJunk.ps1`.
 | Hot / loud fans | Vent cleaning |
 | Drive warning in CrystalDiskInfo | Back up → replace SSD |
 
-**Important:** `C:\SystemMaintenance` does **not** block websites. Cleanup scripts only touch temp files, recycle bin, and old Windows upgrade leftovers. If most sites work but one site times out on phone USB tethering, that is carrier filtering — maintenance cannot fix it.
+**Important:** this toolkit does **not** block websites. Cleanup scripts only touch temp files, recycle bin, and old Windows upgrade leftovers. If most sites work but one site times out on phone USB tethering, that is carrier filtering — maintenance cannot fix it.
 
 ---
 
@@ -417,7 +435,7 @@ Portable ZIP is fine. You do **not** need extra "PC cleaner" apps.
 ## 10. All files in this folder
 
 ```
-C:\SystemMaintenance\
+D:\Projects\tools\SystemMaintenance\
 ├── GUIDE.md                    # This document
 ├── Install_Menu.bat            # Re-apply desktop menu (UAC)
 ├── MAKE_PORTABLE_PACKAGE.bat   # Refresh USB/zip package
@@ -432,8 +450,10 @@ C:\SystemMaintenance\
 ├── app\                        # RAMMap + portable shortcuts for App Group
 ├── icons\                      # NVIDIA, Start button, File Explorer icons
 ├── logs\                       # RAMMap_Empty.log
-└── PortablePackage\            # Copy for another PC
+└── SETUP_NEW_PC.bat            # One-click install on another PC
 ```
+
+`PortablePackage\` is **build output, not a stored folder** — `MAKE_PORTABLE_PACKAGE.bat` generates it on demand and it is deleted after transfer. Keeping it around means a second, silently drifting copy of every script.
 
 **Not in this folder (separate projects):**
 - Chrome extensions → [youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock)
@@ -444,10 +464,12 @@ C:\SystemMaintenance\
 |------|---------|
 | `GUIDE.md` | **This document** — complete reference |
 | `Install_Menu.bat` | Re-apply desktop menu (UAC) — icons, registry, NVIDIA hide |
+| `SETUP_NEW_PC.bat` | One-click install on another PC (copy → `Install_Menu.bat` → guard task) |
 | `Add_Desktop_Menu.reg` | Registry source for context menu |
 | `tools\_FinalCheck.ps1` | Full health check (`_ValidateScripts` + `_AuditMenu`) |
 | `scripts\System_MaintenanceProtect.ps1` | Clipboard protection + shared temp/prefetch cleanup |
 | `scripts\System_HideNvidiaDesktopMenu.ps1` | Remove duplicate NVIDIA desktop context menu entries |
+| `scripts\Install_NvidiaMenuGuard.ps1` | Register/remove the scheduled task that auto-runs the NVIDIA hide script |
 | `scripts\System_AwccOverlayGuard.ps1` | Suppress Alienware overlay during Explorer restart |
 | `scripts\System_WingetHelpers.ps1` | Winget/chocolatey scans; direct `winget.exe` path |
 | `scripts\System_WindowsJunk.ps1` | Old Windows file cleanup (Deep / Admin) |
@@ -528,16 +550,16 @@ Source: `Add_Desktop_Menu.reg`
 
 ```bat
 :: Re-install desktop menu
-C:\SystemMaintenance\Install_Menu.bat
+D:\Projects\tools\SystemMaintenance\Install_Menu.bat
 
 :: Apply registry manually
-reg import "C:\SystemMaintenance\Add_Desktop_Menu.reg"
+reg import "D:\Projects\tools\SystemMaintenance\Add_Desktop_Menu.reg"
 
 :: Run full maintenance
-C:\SystemMaintenance\System_AllInOne.bat
+D:\Projects\tools\SystemMaintenance\System_AllInOne.bat
 
 :: Run RAM Map Empty
-C:\SystemMaintenance\System_EmptyRAM.bat
+D:\Projects\tools\SystemMaintenance\System_EmptyRAM.bat
 ```
 
 ### 11.5 Downloads required?
@@ -563,23 +585,26 @@ Manage Nilesoft Shell yourself outside this menu.
 
 | Step | Where | Action |
 |------|-------|--------|
-| 1 | Your PC | Run `MAKE_PORTABLE_PACKAGE.bat` |
-| 2 | USB / zip | Copy folder `PortablePackage\SystemMaintenance_Setup` |
+| 1 | Your PC | Run `MAKE_PORTABLE_PACKAGE.bat` — builds `PortablePackage\SystemMaintenance_Setup` |
+| 2 | USB / zip | Copy that folder off |
 | 3 | Friend's PC | Open folder → double-click `SETUP_NEW_PC.bat` → Yes on UAC |
+| 4 | Your PC | Delete `PortablePackage\` — rebuild next time instead of letting it go stale |
 
 Includes scripts, `RAMMap64.exe`, registry, icons, and this guide.
+
+`SETUP_NEW_PC.bat` lives in the source root so the package is fully regenerable. On the target PC it copies to `C:\SystemMaintenance` (a real folder there), then calls `Install_Menu.bat` rather than repeating its steps, so the NVIDIA de-duplicate and the guard task are set up too. `Install_Menu.bat` generates the menu registry for whatever path it lands in, so the destination is not fixed. If the source and destination resolve to the same folder, the script skips the copy instead of overwriting its own source.
 
 ### 11.8 Final audit
 
 ```bat
-powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\tools\_FinalCheck.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\tools\_FinalCheck.ps1
 ```
 
 Or separately:
 
 ```bat
-powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\tools\_ValidateScripts.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\_AuditMenu.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\tools\_ValidateScripts.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\tools\_AuditMenu.ps1
 ```
 
 `tools\_FinalCheck.ps1` — runs both audits; exit 0 only if all pass.  
@@ -592,7 +617,29 @@ powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\_AuditM
 |------|--------|
 | Your menu | `Perz_02_NVIDIA` submenu — App + Control Panel only |
 | Blocked | `NvCplDesktopContext`, `NvAppDesktopContext` shellex handlers |
-| After GPU/driver update | Run **Update All Apps** or `Install_Menu.bat` — auto-hides duplicates |
+| After GPU/driver update | Handled automatically by the guard task below |
+| Manual fallback | Run **Update All Apps** or `Install_Menu.bat` — auto-hides duplicates |
+
+**Guard task.** NVIDIA app self-updates (scheduled task `NVIDIA App SelfUpdate_{...}`) re-create `NvCplDesktopContext`, which puts a second **NVIDIA Control Panel** entry on the desktop menu outside your submenu. Every removal trigger used to be manual, so the duplicate survived until you happened to run a script.
+
+`scripts\Install_NvidiaMenuGuard.ps1` registers `\SystemMaintenance\HideNvidiaDesktopMenu` to close that gap:
+
+| Setting | Value |
+|------|--------|
+| Triggers | At logon (2 min delay) + every 6 hours |
+| Runs as | Interactive user, **Run with highest privileges** |
+| Action | `System_HideNvidiaDesktopMenu.ps1 -Silent -Elevated` |
+
+Run as the interactive user, not SYSTEM — `Restart-ExplorerSafe` must relaunch Explorer into the user's session, and a SYSTEM task would put it in session 0. `-Elevated` is safe here because the task is already elevated; it just skips the UAC prompt path.
+
+```powershell
+# install / re-install
+powershell -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\scripts\Install_NvidiaMenuGuard.ps1
+# uninstall
+powershell -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\scripts\Install_NvidiaMenuGuard.ps1 -Remove
+```
+
+The task is a no-op when nothing is present; Explorer is restarted only when an entry was actually removed.
 
 ### 11.10 Fix Slow Explorer + Alienware (AWCC)
 
@@ -618,13 +665,13 @@ Full detail: `AppGroup\AppGroup_Plan.txt` and [§13](#13-app-group-taskbar).
 | Live config | `%LocalAppData%\AppGroup\appgroups.json` — **user-edited; scripts do not overwrite on scan** |
 | Taskbar groups | 8 icons: Browse, Talk, Design, Desk, Code, Mind AI, Relax, Arena |
 | Grouped apps | 31 (as of July 2026 scan) |
-| Portable shortcuts | `C:\SystemMaintenance\app\` — WhatsApp, Telegram, Codex `.lnk` + `DoubleHeadphones.exe` |
-| Refresh docs | `powershell -File C:\SystemMaintenance\tools\_SyncFromLiveAppGroup.ps1` |
+| Portable shortcuts | `D:\Projects\tools\SystemMaintenance\app\` — WhatsApp, Telegram, Codex `.lnk` + `DoubleHeadphones.exe` |
+| Refresh docs | `powershell -File D:\Projects\tools\SystemMaintenance\tools\_SyncFromLiveAppGroup.ps1` |
 | Re-apply config | `_ApplyAppGroups.ps1` — only when explicitly requested |
 
 ### 11.13 Alienware keyboard / AlienFX lighting
 
-This PC is an **Alienware m16 R2**. Lighting is controlled by AWCC (AlienFX) + firmware shortcuts — not by anything in `C:\SystemMaintenance` (except overlay suppression in §11.10).
+This PC is an **Alienware m16 R2**. Lighting is controlled by AWCC (AlienFX) + firmware shortcuts — not by anything in this toolkit (except overlay suppression in §11.10).
 
 Ignore web “AI Mode” write-ups that mix Acer Helios / Reddit folklore with Dell steps. Use Dell’s behavior below.
 
@@ -697,7 +744,7 @@ Dell lights-off / Go Dark reference: [KB 000211659](https://www.dell.com/support
 
 | Item | Detail |
 |------|--------|
-| Menu command | `"C:\SystemMaintenance\System_EmptyRAM.bat"` |
+| Menu command | `"D:\Projects\tools\SystemMaintenance\System_EmptyRAM.bat"` |
 | Elevation | Batch self-elevates via `net session` + UAC |
 | Tool | `app\RAMMap64.exe` |
 | Order | Ew → Es → E0 → Et → Em |
@@ -803,10 +850,70 @@ Dell lights-off / Go Dark reference: [KB 000211659](https://www.dell.com/support
 | Troubleshooting §7 | Rows for “few keys stay lit” and “want all lights off” |
 | Corrected myths | Black≠useless; Stealth≠blackout; don’t delete `%AppData%\Alienware` blindly; ignore Acer Helios AI junk |
 
+### July 2026 — NVIDIA duplicate menu auto-guard
+
+An NVIDIA app update restored `NvCplDesktopContext`, putting a stray **NVIDIA Control Panel** entry on the desktop menu next to the `Perz_02_NVIDIA` submenu.
+
+| Change | Detail |
+|--------|--------|
+| `scripts\Install_NvidiaMenuGuard.ps1` | New — registers `\SystemMaintenance\HideNvidiaDesktopMenu` (logon + every 6 h) so the duplicate is removed without waiting for a manual script run |
+| `System_HideNvidiaDesktopMenu.ps1` — `Removed` list fixed | The elevated pass runs in a child process, so the parent's second removal pass always found nothing and reported `Removed = {}`. It now diffs a before/after snapshot. This silently suppressed the NVIDIA note in **Update All Apps**, which gates on `Removed.Count` |
+| `System_HideNvidiaDesktopMenu.ps1` — `-NoExplorerRestart` | Added so the elevated child skips the restart and the parent performs exactly one, now that the parent correctly sees the removals |
+
+### July 2026 — Duplicate file cleanup (single source of truth)
+
+Audited all 139 files by hash. 38 of 39 same-name groups were `PortablePackage\SystemMaintenance_Setup` — a stored snapshot of the whole toolkit, 13 of them already drifted behind the live scripts.
+
+| Change | Reason |
+|--------|--------|
+| Deleted `PortablePackage\` | Build output, not a folder to keep. It was a June-era copy still using the old flat layout, so edits to `scripts\` never reached it |
+| `SETUP_NEW_PC.bat` moved to source root | It existed **only** inside the package. `MAKE_PORTABLE_PACKAGE.bat` builds from the source tree, so deleting the package would have destroyed it with no way to regenerate |
+| `SETUP_NEW_PC.bat` now calls `Install_Menu.bat` | It duplicated the icon/registry steps and had drifted to the pre-July flat layout (`%DEST%\Extract_NVIDIA_Icons.ps1`). Delegating means new PCs also get the NVIDIA de-duplicate and guard task |
+| Same-folder guard in `SETUP_NEW_PC.bat` | At the time, `C:\SystemMaintenance` was a junction to the source, so an unguarded copy would overwrite its own source |
+| Deleted superseded `DRIVE_LAYOUT` drafts under `tools\` | Local machine maps stay gitignored; do not publish personal drive maps |
+| `_ValidateScripts.ps1` required-files list | It demanded `windhawk\README.md` and two `chrome-extensions` manifests that `.gitignore` forbids storing here — 3 permanent failures. Replaced with a check that those second copies are **absent** |
+
+### July 2026 — No fixed install path (junction removed)
+
+An old install pattern used a drive-root junction (for example `C:\SystemMaintenance`) that pointed at the real toolkit folder elsewhere. That made the toolkit appear in two places and broke anything that still assumed the junction after it was removed. **There is one real toolkit folder now** — wherever you cloned or copied it.
+
+The toolkit is self-locating and runs from any drive or folder:
+
+| Change | Detail |
+|--------|--------|
+| `scripts\Build_DesktopMenuReg.ps1` | New. Rewrites `Add_Desktop_Menu.reg` so all menu commands point at wherever the folder actually is. `Install_Menu.bat` runs it, imports the generated file, then deletes it |
+| `Add_Desktop_Menu.reg` | Keeps `C:\SystemMaintenance` as a **placeholder**, so it stays valid for a fresh PC that really does install there |
+| `.bat` files | Use `%~dp0` instead of a fixed root |
+| `.ps1` / `.py` helpers | Derive the root from `$PSScriptRoot` / `__file__` |
+| `_Root.ps1` | Dropped the hard-coded `C:\SystemMaintenance` fallback |
+| `_ValidateScripts.ps1` | Checks live menu commands resolve to this folder |
+
+**If you move this folder, re-run `Install_Menu.bat`.** Also re-run the optional icon scripts (`Extract_FileExplorer_Icon.ps1`, `Apply_StartButton_Matter.ps1`) so shortcuts and Windhawk styles keep matching the new location.
+
+`SETUP_NEW_PC.bat` still installs to `C:\SystemMaintenance` on a *different* PC. That is a real folder there, not a junction.
+
+### July 2026 — No C:→D: app junctions
+
+Game/tool installs that lived on another drive were previously linked from `C:\` with junctions. Those links are gone: each app has **one real folder**, and launchers/registry/config were repointed before removing the links. After relocating a game, update any Windhawk **excluded folder** settings (for example the taskbar fullscreen-peek mod) to the new path.
+
+### July 2026 — Custom File Explorer icon
+
+`scripts\Extract_FileExplorer_Icon.ps1` builds `icons\file_explorer.ico` from `icons\file_explorer_256.png` (or a source PNG/SVG) and applies it to File Explorer shortcuts (taskbar pin, Start Menu, desktop). It also refreshes the Windows icon cache. Re-run after moving the toolkit folder.
+
+### July 2026 — Safe secondary-drive cache cleanup
+
+Routine cleanup was system-drive-centric. Secondary-drive cleanup is now integrated without treating personal data as junk:
+
+| Trigger | Secondary-drive action |
+|---|---|
+| Quick Clean / user cleanup | Clears only an allowlisted cache folder (default name `Cache` on the data drive) |
+| Free Disk Space / Deep / Admin | Also clears allowlisted package/project generated caches |
+| Every cleanup | Skips junctions, Git/dependency/environment trees, media, games, study folders, and other non-allowlisted data |
+
 Verify anytime:
 
 ```bat
-powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\tools\_FinalCheck.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\tools\_FinalCheck.ps1
 ```
 
 ---
@@ -841,7 +948,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\tools\_
 | `_ApplyAppGroups.ps1` | Re-writes `appgroups.json` — use only when you want to reset groups |
 
 ```bat
-powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\tools\_SyncFromLiveAppGroup.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\tools\_SyncFromLiveAppGroup.ps1
 ```
 
 ### 13.3 `app\` portable shortcuts
@@ -854,7 +961,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File C:\SystemMaintenance\tools\_
 | `app\DoubleHeadphones.exe` | Relax |
 | `app\RAMMap64.exe` | Start Menu only (maintenance tool) |
 
-Root `C:\SystemMaintenance\app\RAMMap64.exe` is the copy used by **RAM Map Empty** menu.
+Root `D:\Projects\tools\SystemMaintenance\app\RAMMap64.exe` is the copy used by **RAM Map Empty** menu.
 
 ### 13.4 Chrome profiles
 

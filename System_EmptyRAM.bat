@@ -16,7 +16,7 @@ echo [%date% %time%] RAM Map Empty started >> "%LOG%"
 
 if not exist "%RAM%" (
     echo [%date% %time%] ERROR: RAMMap64.exe not found >> "%LOG%"
-    powershell.exe -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [void][System.Windows.Forms.MessageBox]::Show('RAMMap64.exe not found in C:\SystemMaintenance\app','System Maintenance','OK','Warning')"
+    powershell.exe -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [void][System.Windows.Forms.MessageBox]::Show('RAMMap64.exe not found in %~dp0app','System Maintenance','OK','Warning')"
     exit /b 1
 )
 

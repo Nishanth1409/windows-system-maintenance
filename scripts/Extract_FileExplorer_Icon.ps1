@@ -5,6 +5,7 @@ $ErrorActionPreference = 'Stop'
 $iconsDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'icons'
 $svgPath  = Join-Path $iconsDir 'file explorer.svg'
 $pngPath  = Join-Path $iconsDir 'file_explorer.png'
+$altPng   = Join-Path $iconsDir 'file_explorer_256.png'
 $icoPath  = Join-Path $iconsDir 'file_explorer.ico'
 $pyBuild  = Join-Path (Split-Path $PSScriptRoot -Parent) 'tools\_BuildFileExplorerIco.py'
 $explorerExe = Join-Path $env:SystemRoot 'explorer.exe'
@@ -19,17 +20,29 @@ if (Test-Path -LiteralPath $svgPath) {
     }
 }
 
-if (-not (Test-Path -LiteralPath $pngPath)) {
-    throw "Missing source image: $pngPath (or $svgPath)"
+# The original file_explorer.png source is optional: the 256 PNG this script
+# emits is a valid source for a rebuild, and a prebuilt .ico needs no source at
+# all. Only fail when there is nothing to apply.
+$source = $null
+foreach ($candidate in @($pngPath, $altPng)) {
+    if (Test-Path -LiteralPath $candidate) { $source = $candidate; break }
 }
 
 $py = Get-Command python -ErrorAction SilentlyContinue
-if (-not $py) { throw 'Python is required to build multi-size ICO' }
-& $py.Source $pyBuild
-if ($LASTEXITCODE -ne 0) { throw 'ICO build failed' }
-if (-not (Test-Path -LiteralPath $icoPath)) { throw "ICO not created: $icoPath" }
+$canBuild = $source -and $py
 
-Write-Host "Saved: $icoPath"
+if ($canBuild) {
+    & $py.Source $pyBuild $source
+    if ($LASTEXITCODE -ne 0) { throw 'ICO build failed' }
+    Write-Host "Saved: $icoPath"
+} elseif (Test-Path -LiteralPath $icoPath) {
+    if (-not $source) { Write-Host "No source PNG; applying existing $icoPath" }
+    elseif (-not $py) { Write-Host "Python not available; applying existing $icoPath" }
+} else {
+    throw "No icon to apply: need $pngPath (or $altPng) plus Python, or a prebuilt $icoPath"
+}
+
+if (-not (Test-Path -LiteralPath $icoPath)) { throw "ICO not created: $icoPath" }
 
 function Set-FileExplorerShortcut {
     param(

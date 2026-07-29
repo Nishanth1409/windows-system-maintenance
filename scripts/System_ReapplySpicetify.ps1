@@ -27,7 +27,7 @@ if (-not (Test-SpotifyDesktopInstalled)) {
 
 Stop-SpotifyProcess
 
-if (-not (Ensure-SpicetifyOnPath)) {
+if (-not (Resolve-SpicetifyOnPath)) {
     $installed = Install-OfficialSpicetifyCli -Silent:$Silent
     if ($installed.Status -eq 'Failed') {
         Show-Result $installed.Message 'Warning'

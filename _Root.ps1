@@ -6,8 +6,10 @@ function Get-SMRoot {
     if ($PSScriptRoot) {
         $parent = Split-Path $PSScriptRoot -Parent
         if (Test-Path (Join-Path $parent 'GUIDE.md')) { return $parent }
+        # No fixed install path any more — the toolkit runs from wherever it sits.
+        return $parent
     }
-    return 'C:\SystemMaintenance'
+    throw 'Cannot resolve the System Maintenance root: $PSScriptRoot is empty.'
 }
 
 $script:SMRoot = Get-SMRoot

@@ -37,11 +37,11 @@ function Clear-FolderContents {
     if (-not (Test-Path $Folder)) { return }
     Write-Step $Label
     $cleared = $false
-    Get-ChildItem $Folder -Force -ErrorAction SilentlyContinue | ForEach-Object {
-        if (Test-ProtectedMaintenancePath $_.FullName) { return }
+    foreach ($item in (Get-ChildItem $Folder -Force -ErrorAction SilentlyContinue)) {
+        if (Test-ProtectedMaintenancePath $item.FullName) { continue }
         try {
-            if (-not $_.PSIsContainer) { $script:freed += [long]$_.Length }
-            Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
+            if (-not $item.PSIsContainer) { $script:freed += [long]$item.Length }
+            Remove-Item $item.FullName -Recurse -Force -ErrorAction Stop
             $cleared = $true
         } catch { $script:skipped++ }
     }
@@ -65,9 +65,11 @@ function Clear-OldLogFiles {
 # Quick = intentionally empty — weekly clean uses System_QuickClean.ps1
 
 if ($Level -in @('Deep', 'Admin')) {
-    Invoke-MaintenanceStandardCleanup -Skipped ([ref]$script:skipped)
+    Invoke-MaintenanceStandardCleanup -Skipped ([ref]$script:skipped) -Freed ([ref]$script:freed)
+    Invoke-MaintenanceDataDriveDeepCacheCleanup -Skipped ([ref]$script:skipped) -Freed ([ref]$script:freed)
     $script:removed.Add("Temp folders ($([System.IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'Temp'))), Windows\Temp)") | Out-Null
     $script:removed.Add('Prefetch') | Out-Null
+    $script:removed.Add('D: cache only (D:\Cache, pnpm store, generated project caches)') | Out-Null
 
     $upgradeLeftovers = @(
         'C:\$WINDOWS.~BT', 'C:\$Windows.~WS', 'C:\$GetCurrent', 'C:\ESD'

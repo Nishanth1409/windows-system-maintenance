@@ -1,4 +1,4 @@
-﻿APP GROUP — FULL PLAN (live from appgroups.json)
+APP GROUP — FULL PLAN (live from appgroups.json)
 Updated: 2026-07-08 01:59
 App Group software: 1.5.0 | Total grouped: 31 apps | Groups: 8
 
@@ -44,11 +44,12 @@ PURPOSE RULES
   Arena          — Riot Client (launch VALORANT from here)
 
 PORTABLE EXE / CUSTOM SHORTCUTS IN GROUPS
-  C:\SystemMaintenance\app\DoubleHeadphones.exe   → Relax (direct exe)
-  C:\SystemMaintenance\app\WhatsApp.lnk           → Talk
-  C:\SystemMaintenance\app\Telegram Desktop.lnk   → Talk
-  C:\SystemMaintenance\app\Codex.lnk              → Mind AI
+  (paths are relative to the toolkit folder — see DRIVE_LAYOUT.md)
+  app\WhatsApp.lnk           → Talk
+  app\Telegram Desktop.lnk   → Talk
+  app\Codex.lnk              → Mind AI
   YouTube Music — Chrome PWA lnk (no portable exe on disk)
+  app\DoubleHeadphones.exe   → Relax — MISSING from app\, re-add the exe to restore this group entry
 
 CHROME PROFILES (for school / shared Chrome)
   Person 1 | Srushti | Your Chrome | Nkr — no profile named Vijender
@@ -63,8 +64,9 @@ EXCLUDED
 
 SCRIPTS
 -------
-  Re-apply all groups:  powershell -File C:\SystemMaintenance\_ApplyAppGroups.ps1
-  Sync from app edits: powershell -File C:\SystemMaintenance\_SyncFromLiveAppGroup.ps1
-  Refresh docs:         powershell -File C:\SystemMaintenance\_UpdateAppGroupDocs.ps1
-  Ungrouped list:       C:\SystemMaintenance\AppGroup\Apps_Not_In_Groups.txt
-  Notable ungrouped:    C:\SystemMaintenance\AppGroup\Apps_Not_In_Groups_Notable.txt
+  (run from the toolkit folder; these moved into tools\ in the July 2026 reorg)
+  Re-apply all groups:  powershell -File tools\_ApplyAppGroups.ps1
+  Sync from app edits:  powershell -File tools\_SyncFromLiveAppGroup.ps1
+  Refresh docs:         powershell -File tools\_UpdateAppGroupDocs.ps1
+  Ungrouped list:       AppGroup\Apps_Not_In_Groups.txt
+  Notable ungrouped:    AppGroup\Apps_Not_In_Groups_Notable.txt
