@@ -162,7 +162,7 @@ Shows a completion message when all 5 steps finish. Do not run constantly — Wi
 | Update Spotify + Spicetify | `System_UpdateSpicetify.ps1` → official Spotify installer + Spicetify `iwr \| iex` + re-apply |
 | Security Quick Scan | `System_SecurityScan.ps1` |
 | Startup Apps | `System_StartupApps.ps1` |
-| Fix Slow Explorer | `System_FixExplorer.ps1` → `System_RestartExplorerCore.ps1` + `System_AwccOverlayGuard.ps1` |
+| Fix Slow Explorer | `System_FixExplorer.ps1` → `System_ExplorerViewProfile.ps1` + `System_RestartExplorerCore.ps1` + `System_AwccOverlayGuard.ps1` |
 | RAM Map Empty | `System_EmptyRAM.bat` |
 | Full Maintenance (Admin) | `System_AllInOne.bat` → `System_Admin.bat` + `System_User.ps1` |
 
@@ -236,8 +236,30 @@ Shared logic: `System_MaintenanceProtect.ps1` → `Invoke-MaintenanceStandardCle
 | Recycle bin | Yes |
 | Clipboard history (Win+V) | **No** |
 | Thumbnail/icon cache | **No** |
+| File Explorer view / sort / group settings | **No** — verified and repaired after every clean |
 
 Quick Clean does **not** call `System_WindowsJunk.ps1`.
+
+### 5.1.1 File Explorer view profile is protected
+
+`System_ExplorerViewProfile.ps1` holds the one saved view profile:
+
+| Scope | View | Sort | Group |
+|---|---|---|---|
+| All normal folders | Extra large icons | Date modified, newest first | Date modified |
+| This PC only | Tiles | Name, A→Z | Type |
+
+Show options kept with it: hidden items, file extensions, item check boxes, compact view, Details pane.
+
+Every cleanup routine runs `Invoke-MaintenanceStandardCleanup`, which ends with
+`Protect-ExplorerViewSettings`. That compares the live registry with the profile and rewrites it
+only when something drifted, so **cleaning caches can never change how folders look or sort**.
+`%LocalAppData%\Microsoft\Windows\Explorer` and `UsrClass.dat` are also on the protected-path list,
+so no cleaner can delete Explorer's own view state.
+
+To reapply everything by hand (including folders you already opened) run **Fix Slow Explorer**;
+it writes the profile to 400+ existing folder bags, backs up the old registry keys into `logs\`,
+and restarts Explorer.
 
 ### 5.2 Windows junk levels (`System_WindowsJunk.ps1`)
 
@@ -271,7 +293,8 @@ First verified run removed **1,488.2 MB** from approved D: caches with zero skip
 |--------------------------------|-----|
 | Thumbnail / icon cache | Slow File Explorer |
 | SoftwareDistribution\Download | Slow Windows Update + app installs |
-| Shell Bags (except Fix Explorer sets AllFolders only) | Slow every folder open |
+| Shell Bags (Fix Explorer rewrites the saved profile, never deletes bags) | Slow every folder open, and loses the sort/group profile |
+| `%LocalAppData%\Microsoft\Windows\Explorer` and `UsrClass.dat` | Explorer's view state — deleting it resets every folder |
 | Clipboard history (`%LocalAppData%\Microsoft\Windows\Clipboard`) | Win+V history — clear only in Clipboard UI (Win+V → Clear all) |
 | winget pin reset every run | Slow updates; can unblock pinned packages unexpectedly |
 
@@ -487,6 +510,7 @@ D:\Projects\tools\SystemMaintenance\
 | `scripts\System_StartupApps.ps1` | Startup Apps menu |
 | `scripts\System_SoftwareCheckup.ps1` | Software Checkup (All) menu |
 | `scripts\System_FixExplorer.ps1` | Fix Slow Explorer menu |
+| `scripts\System_ExplorerViewProfile.ps1` | Saved Explorer view/sort/group profile — applied by Fix Explorer, verified after every cleanup |
 | `scripts\System_RestartExplorerCore.ps1` | Safe Explorer restart (used by Fix Explorer) |
 | `app\RAMMap64.exe` | Sysinternals RAMMap tool (used by RAM Map Empty) |
 | `System_EmptyRAM.bat` | RAM Map Empty — 5-step deep purge |
@@ -899,6 +923,21 @@ Game/tool installs that lived on another drive were previously linked from `C:\`
 ### July 2026 — Custom File Explorer icon
 
 `scripts\Extract_FileExplorer_Icon.ps1` builds `icons\file_explorer.ico` from `icons\file_explorer_256.png` (or a source PNG/SVG) and applies it to File Explorer shortcuts (taskbar pin, Start Menu, desktop). It also refreshes the Windows icon cache. Re-run after moving the toolkit folder.
+
+### July 2026 — Explorer view profile survives cleaning
+
+Cleaning caches used to be able to change how File Explorer looked: `System_FixExplorer.ps1` wrote
+its own icon-only defaults over `Bags\AllFolders`, dropping the saved sort and group choices.
+
+| Change | Detail |
+|---|---|
+| `scripts\System_ExplorerViewProfile.ps1` | New. The one definition of the view profile — Extra large icons / Date modified (desc) / grouped by Date modified for folders, Tiles / Name (asc) / grouped by Type for This PC, plus hidden items, extensions, check boxes, compact mode, Details pane |
+| `System_FixExplorer.ps1` | Applies that profile (including 400+ existing folder bags and This PC) instead of its own partial values; backs up the old keys to `logs\` first |
+| `System_MaintenanceProtect.ps1` | `Invoke-MaintenanceStandardCleanup` now ends with `Protect-ExplorerViewSettings`, which rewrites the profile only when it has drifted |
+| Protected paths | `%LocalAppData%\Microsoft\Windows\Explorer` and `UsrClass.dat*` added, so no cleaner can delete Explorer's view state |
+
+Every cleanup entry point (Quick Clean, Free Disk Space, Windows junk Deep/Admin, User maintenance)
+goes through that shared function, so the sort/view settings are checked after each run.
 
 ### July 2026 — Safe secondary-drive cache cleanup
 

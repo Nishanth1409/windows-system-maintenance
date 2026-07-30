@@ -88,6 +88,21 @@ These scripts derive paths from the toolkit folder. After you **move** the folde
 
 ---
 
+## File Explorer view profile
+
+`scripts\System_ExplorerViewProfile.ps1` stores one view profile and every cleanup routine verifies
+it afterwards, so clearing caches never changes how folders look or sort.
+
+| Scope | View | Sort | Group |
+| :--- | :--- | :--- | :--- |
+| Normal folders | Extra large icons | Date modified, newest first | Date modified |
+| This PC | Tiles | Name, A→Z | Type |
+
+Run **Fix Slow Explorer** to reapply it to folders you have already opened. Edit the values at the
+top of that script to use a different profile. Shell bags are rewritten, never deleted.
+
+---
+
 ## Pro tips
 
 1. Read **`GUIDE.md`** before changing admin scripts.  

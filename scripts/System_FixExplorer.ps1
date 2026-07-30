@@ -1,8 +1,10 @@
-# Fix slow File Explorer + Extra large icons (does NOT wipe caches or shell bags)
+# Fix slow File Explorer + reapply the saved view profile
+# (does NOT wipe caches or shell bags)
 param([switch]$Silent)
 
 Add-Type -AssemblyName System.Windows.Forms -ErrorAction SilentlyContinue
 . "$PSScriptRoot\System_RestartExplorerCore.ps1"
+. "$PSScriptRoot\System_ExplorerViewProfile.ps1"
 
 $explorerKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer'
 $advancedKey = "$explorerKey\Advanced"
@@ -15,18 +17,6 @@ function Set-RegDword {
     if ($Label) { $applied.Add($Label) | Out-Null }
 }
 
-function Set-ExtraLargeIconsAllFolders {
-    $shell = 'HKCU:\Software\Classes\Local Settings\Software\Microsoft\Windows\Shell\Bags\AllFolders\Shell'
-    New-Item -Path $shell -Force | Out-Null
-    Set-ItemProperty -Path $shell -Name 'Mode' -Value 1 -Type DWord -Force
-    Set-ItemProperty -Path $shell -Name 'LogicalViewMode' -Value 1 -Type DWord -Force
-    Set-ItemProperty -Path $shell -Name 'IconSize' -Value 256 -Type DWord -Force
-    Set-ItemProperty -Path $shell -Name 'Rev' -Value 0 -Type DWord -Force
-    Set-ItemProperty -Path $shell -Name 'FFlags' -Value 1098814045 -Type DWord -Force
-    Set-ItemProperty -Path $shell -Name 'Vid' -Value '{137E7700-3573-101A-9153-08002B903E09}' -Type String -Force
-    $applied.Add('Default view: Extra large icons') | Out-Null
-}
-
 # Speed tweaks — SeparateProcess OFF (saves RAM; one process is faster on laptops)
 Set-RegDword $advancedKey 'LaunchTo' 1 'Open to This PC'
 Set-RegDword $explorerKey 'ShowRecent' 0 'Hide recent folders'
@@ -37,8 +27,12 @@ Set-RegDword $advancedKey 'Start_TrackDocs' 0 'No recent-doc tracking'
 Set-RegDword $advancedKey 'ShowCloudFilesInQuickAccess' 0 'Hide cloud in Quick Access'
 Set-RegDword $advancedKey 'FolderContentsInfoTip' 0 'Less folder hover work'
 
-# Set icon default only — do NOT delete Shell Bags (that slows every folder open)
-Set-ExtraLargeIconsAllFolders
+# Reapply the saved view profile — never delete Shell Bags (that slows every
+# folder open and loses per-folder sort/group choices).
+$rewritten = Set-ExplorerViewProfile -Backup
+$applied.Add('Folders: Extra large icons, Date modified (newest first), grouped by Date modified') | Out-Null
+$applied.Add('This PC: Tiles, Name (A-Z), grouped by Type') | Out-Null
+$applied.Add("Existing folder views refreshed: $rewritten") | Out-Null
 
 $ok = Restart-ExplorerSafe -WaitSeconds 8
 
