@@ -1,4 +1,4 @@
-﻿# Windows System Maintenance
+# Windows System Maintenance
 
 Desktop **right-click menu** + PowerShell helpers for Windows cleanup, updates, security scans, Explorer fixes, Spicetify, and related PC care.
 
@@ -53,8 +53,8 @@ Put the folder anywhere you like — the menu adapts to its location.
 | Quick clean | Menu → Quick Clean (Windows temp + `D:\Cache`; personal data protected) |
 | Free disk space | Menu → Free Space / Clean Drive (also prunes approved D: package/project caches) |
 | Windows update | Menu → Update Windows |
-| App updates (winget) | Menu → Update Apps |
-| Full pass | Menu → Full Maintenance (`System_AllInOne.bat`) |
+| App updates | Menu → Update Apps (winget + Chocolatey, then Spotify + Spicetify last) |
+| Full pass | Menu → Full Maintenance (`System_AllInOne.bat`; Spotify + Spicetify run last) |
 | Empty standby RAM | Menu → RAM Empty (`System_EmptyRAM.bat`) |
 
 Or run scripts directly:

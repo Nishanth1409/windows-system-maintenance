@@ -21,7 +21,7 @@ try {
 }
 
 if (-not (Test-SpotifyDesktopInstalled)) {
-    Show-Result 'Spotify is not installed. Use System Maintenance → As needed → Update Spicetify.' 'Warning'
+    Show-Result 'Spotify is not installed. Run System Maintenance → Update All Apps, or run System_UpdateSpicetify.ps1 manually.' 'Warning'
     exit 1
 }
 

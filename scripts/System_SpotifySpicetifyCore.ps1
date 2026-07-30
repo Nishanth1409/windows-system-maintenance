@@ -18,7 +18,7 @@ function Assert-UserPowerShellContext {
         throw 'Spicetify and Spotify updates must run in PowerShell only (not CMD).'
     }
     if (Test-IsAdminSession) {
-        throw 'Run as normal user PowerShell, not Administrator. Use: System Maintenance → As needed → Update Spicetify'
+        throw 'Spotify and Spicetify updates must run as the normal user, not Administrator.'
     }
 }
 
@@ -203,5 +203,54 @@ function Invoke-SpicetifyReapply {
     return [PSCustomObject]@{
         Status  = 'Failed'
         Message = "$hint`n  spicetify restore backup apply"
+    }
+}
+
+function Invoke-SpotifySpicetifyFullUpdate {
+    param([switch]$Silent)
+
+    $notes = New-Object System.Collections.Generic.List[string]
+
+    try {
+        Assert-UserPowerShellContext
+    } catch {
+        $notes.Add($_.Exception.Message) | Out-Null
+        return [PSCustomObject]@{
+            Status   = 'Failed'
+            ExitCode = 1
+            Notes    = @($notes)
+        }
+    }
+
+    Stop-SpotifyProcess
+
+    $spotify = Install-OfficialSpotifyDesktop -Silent:$Silent
+    $notes.Add("Spotify: $($spotify.Message)") | Out-Null
+    if ($spotify.Status -eq 'Failed') {
+        return [PSCustomObject]@{
+            Status   = 'Failed'
+            ExitCode = 1
+            Notes    = @($notes)
+        }
+    }
+
+    $spicetify = Install-OfficialSpicetifyCli -Silent:$Silent
+    $notes.Add("Spicetify CLI: $($spicetify.Message)") | Out-Null
+    if ($spicetify.Status -eq 'Failed') {
+        return [PSCustomObject]@{
+            Status   = 'Failed'
+            ExitCode = 1
+            Notes    = @($notes)
+        }
+    }
+
+    $apply = Invoke-SpicetifyReapply -FreshSpotify
+    $notes.Add("Theme: $($apply.Message)") | Out-Null
+    $exitCode = if ($apply.Status -eq 'Failed') { 1 } else { 0 }
+
+    return [PSCustomObject]@{
+        Status   = if ($exitCode -eq 0) { 'Completed' } else { 'Failed' }
+        ExitCode = $exitCode
+        Notes    = @($notes)
     }
 }

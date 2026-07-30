@@ -1,8 +1,9 @@
-# Update All Apps - winget all sources/scopes + Chocolatey (Spicetify has its own menu item)
+# Update All Apps - winget all sources/scopes + Chocolatey, then Spotify + Spicetify.
 Add-Type -AssemblyName System.Windows.Forms
 
 $base = $PSScriptRoot
 . (Join-Path $base 'System_WingetHelpers.ps1')
+. (Join-Path $base 'System_SpotifySpicetifyCore.ps1')
 
 function Add-UpdateNote {
     param($Result, [string]$Label)
@@ -76,7 +77,7 @@ Direct path (if winget alias is broken):
         '  - Mode: in-place upgrade only (extensions, shortcuts, settings kept)',
         '  - Nilesoft Shell: not updated, not touched by maintenance',
         '  - Chocolatey: all except nilesoft-shell',
-        '  - Spicetify: use menu item Update Spotify + Spicetify (separate)'
+        '  - Final step: Spotify official installer + Spicetify update and theme re-apply'
     )
     $coverageNote = $coverageLines -join [Environment]::NewLine
 
@@ -129,13 +130,29 @@ Direct path (if winget alias is broken):
         }
     }
 
+    $script:updateNotes.Add('Spotify + Spicetify: starting final update step') | Out-Null
+    try {
+        $spotifySpicetify = Invoke-SpotifySpicetifyFullUpdate -Silent
+    } catch {
+        $spotifySpicetify = [PSCustomObject]@{
+            ExitCode = 1
+            Notes    = @("Spotify + Spicetify: unexpected failure - $($_.Exception.Message)")
+        }
+    }
+    foreach ($note in $spotifySpicetify.Notes) {
+        $script:updateNotes.Add($note) | Out-Null
+    }
+    if ($spotifySpicetify.ExitCode -ne 0) {
+        $script:updateNotes.Add('Spotify + Spicetify: finished with a warning; other app updates remain completed') | Out-Null
+    }
+
     $body = ($script:updateNotes | ForEach-Object { '  - ' + $_ }) -join "`n"
     $remainBlock = ''
     if ($after.TotalCount -gt 0) {
         $remainBlock = "`n`nStill listed after update:`n" + $remainText
     }
 
-    $msg = "App update flow finished.`n`n" + $body + "`n`nOrder: Winget Admin -> Winget User -> Chocolatey -> verify." + $remainBlock
+    $msg = "App update flow finished.`n`n" + $body + "`n`nOrder: Winget Admin -> Winget User -> Chocolatey -> verify -> NVIDIA menu cleanup -> Spotify + Spicetify." + $remainBlock
 
     [System.Windows.Forms.MessageBox]::Show($msg, 'System Maintenance', 'OK', 'Information') | Out-Null
 }

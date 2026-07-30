@@ -150,13 +150,8 @@ Windows Registry Editor Version 5.00
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05_UpdateApps\command]
 @="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_UpdateApps.ps1\""
 
-; 9.5b Spicetify (separate from Update All Apps)
-[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05b_UpdateSpicetify]
-@="As needed — Update Spotify + Spicetify"
-"Icon"="%SystemRoot%\\System32\\imageres.dll,-102"
-
-[HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05b_UpdateSpicetify\command]
-@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_UpdateSpicetify.ps1\""
+; Spotify + Spicetify now run automatically as the final Update All Apps step.
+[-HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\05b_UpdateSpicetify]
 
 ; 9.6 Security
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance\shell\06_SecurityScan]
@@ -236,3 +231,17 @@ Windows Registry Editor Version 5.00
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\03_Shutdown\command]
 @="shutdown.exe /s /t 0"
+
+; =============================================================================
+; IMAGE FILES — Set as lock screen
+; =============================================================================
+; The File Explorer command bar cannot be extended safely, so this supported
+; static verb appears when a single image file is right-clicked.
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\SetLockScreen]
+@="Set as lock screen"
+"Icon"="%SystemRoot%\\ImmersiveControlPanel\\SystemSettings.exe"
+"MultiSelectModel"="Single"
+"Position"="Top"
+
+[HKEY_CURRENT_USER\Software\Classes\SystemFileAssociations\image\shell\SetLockScreen\command]
+@="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File \"C:\\SystemMaintenance\\scripts\\System_SetLockScreen.ps1\" -ImagePath \"%1\""

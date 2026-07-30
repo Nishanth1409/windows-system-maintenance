@@ -39,7 +39,7 @@ if ($AfterAppUpdate -and -not $SpotifyUpdated) {
 if ((Resolve-SpicetifyOnPath) -and -not $Force -and -not $AfterAppUpdate) {
     if (-not $Silent) {
         [System.Windows.Forms.MessageBox]::Show(
-            "Spicetify is already installed.`n`nUse System Maintenance → As needed → Update Spicetify.",
+            "Spicetify is already installed.`n`nUpdate All Apps refreshes Spotify + Spicetify automatically as its final step.",
             'System Maintenance', 'OK', 'Information'
         ) | Out-Null
     }

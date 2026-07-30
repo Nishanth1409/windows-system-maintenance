@@ -120,8 +120,7 @@ Each label is prefixed with how often to run it.
 | 2 | Weekly — Quick Clean | User | Windows temp/prefetch + `D:\Cache` + recycle bin |
 | 3 | Weekly — Update Windows | User | Windows Update scan + Settings |
 | 4 | Monthly — Free Disk Space | User | C: system junk + approved D: package/project caches |
-| 5 | Monthly — Update All Apps | Admin→User | Admin winget → User winget → Chocolatey |
-| 5b | As needed — Update Spotify + Spicetify | User | Spotify from `download.scdn.co/SpotifySetup.exe`, then Spicetify `iwr \| iex` + re-apply |
+| 5 | Monthly — Update All Apps | Admin→User | Admin winget → User winget → Chocolatey → Spotify + Spicetify last |
 | 6 | Monthly — Security Quick Scan | User | Defender quick scan (background) |
 | 7 | Monthly — Startup Apps | User | Opens Startup settings |
 | 8 | As needed — Fix Slow Explorer | User | Speed registry + extra large icons + safe restart (AWCC overlay suppressed) |
@@ -158,8 +157,7 @@ Shows a completion message when all 5 steps finish. Do not run constantly — Wi
 | Quick Clean | `System_QuickClean.ps1` |
 | Update Windows | `System_UpdateWindows.ps1` |
 | Free Disk Space | `System_CleanDrive.ps1` → `System_WindowsJunk.ps1` (Deep) |
-| Update All Apps | `System_UpdateApps.ps1` → winget admin/user + Chocolatey |
-| Update Spotify + Spicetify | `System_UpdateSpicetify.ps1` → official Spotify installer + Spicetify `iwr \| iex` + re-apply |
+| Update All Apps | `System_UpdateApps.ps1` → winget admin/user + Chocolatey → Spotify + Spicetify last |
 | Security Quick Scan | `System_SecurityScan.ps1` |
 | Startup Apps | `System_StartupApps.ps1` |
 | Fix Slow Explorer | `System_FixExplorer.ps1` → `System_ExplorerViewProfile.ps1` + `System_RestartExplorerCore.ps1` + `System_AwccOverlayGuard.ps1` |
@@ -178,9 +176,11 @@ Monthly — Update All Apps
         ├─► [3] Chocolatey (all except nilesoft-shell)
         │
         ├─► [4] System_HideNvidiaDesktopMenu.ps1 — remove duplicate NVIDIA desktop entries
+        │
+        └─► [5] Spotify official installer → Spicetify update + theme re-apply (always last)
 ```
 
-**Update Spicetify** (separate menu item): `System_UpdateSpicetify.ps1` — SpotifySetup.exe from scdn.co, then Spicetify official `iwr | iex`, then `spicetify backup apply`
+`System_UpdateSpicetify.ps1` remains as an internal/manual recovery wrapper, but it is no longer a separate menu item. Both app-update workflows call the same shared `Invoke-SpotifySpicetifyFullUpdate` operation.
 
 **Winget:** scripts call `%LocalAppData%\Microsoft\WindowsApps\winget.exe` directly (works when the `winget` alias is broken).  
 **NVIDIA menu:** driver/app updates re-add duplicate Control Panel entries — hidden automatically after Update All Apps and `Install_Menu.bat`.  
@@ -196,6 +196,7 @@ Monthly — Update All Apps
         │
         └─► System_User.ps1 (normal user)
               User winget + Windows temp/prefetch + D:\Cache cleanup
+              └─► Spotify + Spicetify update and theme re-apply (always last)
 ```
 
 ### 4.4 Full flow diagram
@@ -472,6 +473,7 @@ D:\Projects\tools\SystemMaintenance\
 ├── AppGroup\                   # Taskbar group plans + ungrouped lists
 ├── app\                        # RAMMap + portable shortcuts for App Group
 ├── icons\                      # NVIDIA, Start button, File Explorer icons
+├── shell\                      # Nilesoft Shell icon override (see 11.6)
 ├── logs\                       # RAMMap_Empty.log
 └── SETUP_NEW_PC.bat            # One-click install on another PC
 ```
@@ -503,7 +505,7 @@ D:\Projects\tools\SystemMaintenance\
 | `scripts\System_WingetAdmin.ps1` | Admin winget upgrades |
 | `scripts\System_WingetUser.ps1` | User winget upgrades |
 | `scripts\System_SpotifySpicetifyCore.ps1` | Shared URLs + install/re-apply helpers |
-| `scripts\System_UpdateSpicetify.ps1` | Menu — Spotify + Spicetify full update |
+| `scripts\System_UpdateSpicetify.ps1` | Internal/manual wrapper for the shared Spotify + Spicetify update |
 | `scripts\System_InstallSpicetify.ps1` | Spicetify install (called by re-apply if missing) |
 | `scripts\System_ReapplySpicetify.ps1` | Re-apply Spicetify after Spotify update |
 | `scripts\System_SecurityScan.ps1` | Security Quick Scan menu |
@@ -551,7 +553,6 @@ Source: `Add_Desktop_Menu.reg`
 03_UpdateWindows      Weekly — Update Windows
 04_FreeSpace          Monthly — Free Disk Space
 05_UpdateApps         Monthly — Update All Apps
-05b_UpdateSpicetify   As needed — Update Spotify + Spicetify
 06_SecurityScan       Monthly — Security Quick Scan
 07_StartupApps        Monthly — Startup Apps
 08_FixExplorer        As needed — Fix Slow Explorer
@@ -568,7 +569,7 @@ Source: `Add_Desktop_Menu.reg`
 | Admin winget + NVIDIA duplicate hide | User winget + temp/prefetch cleanup |
 | RAM Map Empty (`System_EmptyRAM.bat`) | Fix Slow Explorer (HKCU registry) |
 
-**Removed from maintenance (was wrong):** `ipconfig /release` + `/renew` (disconnects internet), weekly cache wipes, Spicetify download every run.
+**Removed from maintenance (was wrong):** `ipconfig /release` + `/renew` (disconnects internet) and weekly cache wipes.
 
 ### 11.4 Quick commands
 
@@ -592,18 +593,44 @@ D:\Projects\tools\SystemMaintenance\System_EmptyRAM.bat
 |-----------|---------|
 | PowerShell, winget, DISM, SFC, netsh | **No** — built into Windows |
 | RAMMap64.exe | **No** — already in folder |
-| Spicetify | **No** — use **Update Spicetify** menu item when needed |
+| Spicetify | **No** — Update All Apps and Full Maintenance update it automatically as their final step |
 | CrystalDiskInfo | **Optional** — recommended for drive health |
 
 ### 11.6 Nilesoft Shell (excluded — not maintained)
 
 | Rule | Detail |
 |------|--------|
-| Install location | `C:\Program Files\Nilesoft Shell` — **never changed** by System Maintenance |
+| Install location | `C:\Program Files\Nilesoft Shell` |
 | App updates | Nilesoft.Shell / nilesoft-shell **skipped** in winget and Chocolatey scans only |
 | No maintenance scripts | No backup, pin, theme sync, handler re-register, or restore |
 
-Manage Nilesoft Shell yourself outside this menu.
+Manage Nilesoft Shell yourself outside this menu. Its theme, settings and menu
+entries are never touched.
+
+**The one exception — menu icons.** Nilesoft Shell draws the desktop context
+menu itself, and it replaces the icon of any item whose title matches one of its
+built-in glyphs. The glyph is filled with the current theme colours, so our
+`NVIDIA` parent item was drawn white/blue instead of NVIDIA green even though
+the registry pointed at `icons\nvidia_app.ico`. The submenu entries were
+unaffected because their titles do not match a glyph name.
+
+`Install_Menu.bat` therefore installs a single override:
+
+| File | Written by | Purpose |
+|------|-----------|---------|
+| `imports\systemmaintenance.nss` | `scripts\Install_NilesoftMenuIcons.ps1` | `modify(...)` rule pinning the NVIDIA item to our `.ico` |
+| `shell.nss` | same script | One `import 'imports/systemmaintenance.nss'` line |
+
+The original `shell.nss` is copied to `shell.nss.sm-backup` before the first
+edit. The rule is scoped with `where=str.equals(this.name, 'NVIDIA')` so it
+matches the parent item only — `find` alone would also catch
+"NVIDIA Control Panel" and give it the wrong icon. The icon path is rewritten
+for wherever this toolkit lives, exactly like `Add_Desktop_Menu.reg`.
+
+A Nilesoft Shell update rewrites `shell.nss` and drops third-party lines. If the
+NVIDIA icon turns white/blue again, re-run `Install_Menu.bat` as admin. If
+Nilesoft is not installed, the script does nothing and Explorer uses the
+registry icons directly.
 
 ### 11.7 Portable package (another laptop)
 
@@ -828,7 +855,7 @@ Dell lights-off / Go Dark reference: [KB 000211659](https://www.dell.com/support
 | `System_AwccOverlayGuard.ps1` | Fix Slow Explorer no longer opens Alienware overlay onboarding |
 | Post-repair cleanup | Removed Share hide/restore scripts (root cause was Windhawk Dynamic Island, not Windows) |
 | Removed Win11Debloat-master | Folder and desktop menu item removed from System Maintenance |
-| Spicetify own menu item | **Update Spotify + Spicetify** — scdn.co installer + official Spicetify iwr\|iex |
+| Spotify + Spicetify integration | Runs last in Update All Apps and Full Maintenance; manual wrapper retained |
 | Upgrade scan snapshot | `%LocalAppData%\SystemMaintenance\PreScan.clixml` (not deleted with temp cleanup) |
 
 ### July 2026 — App Group taskbar + scan data
@@ -923,6 +950,57 @@ Game/tool installs that lived on another drive were previously linked from `C:\`
 ### July 2026 — Custom File Explorer icon
 
 `scripts\Extract_FileExplorer_Icon.ps1` builds `icons\file_explorer.ico` from `icons\file_explorer_256.png` (or a source PNG/SVG) and applies it to File Explorer shortcuts (taskbar pin, Start Menu, desktop). It also refreshes the Windows icon cache. Re-run after moving the toolkit folder.
+
+### July 2026 — Spotify + Spicetify integrated into update workflows
+
+The separate context-menu button was removed. `Invoke-SpotifySpicetifyFullUpdate` now holds the existing
+official Spotify installer → Spicetify CLI update → theme re-apply sequence in one shared operation.
+**Update All Apps** calls it after winget, Chocolatey, verification, and NVIDIA menu cleanup. **Full
+Maintenance** calls it after its admin work, user winget, and cleanup. Software Checkup inherits the
+same behavior when its Update All Apps prompt is accepted. A Spotify/Spicetify failure is reported in
+the final summary and does not undo or hide the app updates that already completed.
+
+`System_UpdateSpicetify.ps1` remains as an internal/manual wrapper around the same shared operation,
+so direct automation and recovery use are preserved without a duplicate menu entry.
+
+### July 2026 — Set image as lock screen
+
+Image files have a **Set as lock screen** right-click action. It calls
+`scripts\System_SetLockScreen.ps1`, which uses Microsoft's current-user
+`Windows.System.UserProfile.LockScreen.SetImageFileAsync` API. It applies to a
+single selected image, does not replace **Set as background**, and does not
+require administrator rights. The wallpaper is applied silently — only a failure
+raises a dialog.
+
+The preferred location was directly beside **Set as background** in File
+Explorer's command bar, but Windows does not provide a supported extension
+point there. Microsoft's `IExplorerCommand` API extends context menus instead.
+The toolkit therefore uses the safe image-file right-click verb and does not
+inject code into `explorer.exe`.
+
+### July 2026 — NVIDIA menu icon no longer replaced by a theme glyph
+
+The NVIDIA submenu entries showed the green NVIDIA mark, but the parent **NVIDIA**
+button that opens them was drawn white/blue. Both point at the same
+`icons\nvidia_app.ico`, and every frame in that file was verified green, so the
+registry was never the problem.
+
+The cause is Nilesoft Shell, which renders the desktop menu and substitutes its
+built-in `@nvidia` glyph for any item titled NVIDIA. The glyph takes its colours
+from the active theme, which produced the white/blue eye.
+
+`scripts\Install_NilesoftMenuIcons.ps1` now pins the icon in Nilesoft's own
+config, and `Install_Menu.bat` runs it as its final step. See section 11.6 for
+what it writes and how to recover after a Nilesoft update. Explorer's icon cache
+and the extracted `.ico` files were not the cause and were left as they were.
+
+### July 2026 — Spotify + Spicetify icon asset removed
+
+The former separate **Update Spotify + Spicetify** menu entry used a custom
+`icons\spotify_spicetify.ico`. After that operation became the automatic final
+step of Update All Apps and Full Maintenance, the menu entry was removed and the
+unused icon assets (`spotify_spicetify.ico`, `spotify_spicetify_256.png`), their
+build script, and source PNGs were deleted.
 
 ### July 2026 — Explorer view profile survives cleaning
 

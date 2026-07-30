@@ -41,7 +41,7 @@ if ($scanStarted) {
 
 # 3) Offer app updates (winget can take a long time)
 $choice = [System.Windows.Forms.MessageBox]::Show(
-    "Software checkup started:`n`n  - $($steps -join "`n  - ")`n`nRun Update All Apps now?`n(Winget + Chocolatey; Spotify/Spicetify use separate menu item)`nThis can take several minutes.",
+    "Software checkup started:`n`n  - $($steps -join "`n  - ")`n`nRun Update All Apps now?`n(Winget + Chocolatey, then Spotify + Spicetify as the final step)`nThis can take several minutes.",
     "System Maintenance",
     [System.Windows.Forms.MessageBoxButtons]::YesNo,
     [System.Windows.Forms.MessageBoxIcon]::Question
