@@ -1,17 +1,32 @@
+<div align="center">
+
 # Windows System Maintenance
 
-Desktop **right-click menu** + PowerShell helpers for Windows cleanup, updates, security scans, Explorer fixes, Spicetify, and related PC care.
+**Desktop right-click menu + PowerShell** for cleanup, updates, security scans, Explorer fixes, Spicetify, and related PC care.
 
-**Author:** [Nishanth K R](https://github.com/Nishanth1409) · [Portfolio](https://nkrportfolio.vercel.app)
+[![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-0078D4?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
+[![PowerShell](https://img.shields.io/badge/PowerShell-5%2B-5391FE?logo=powershell&logoColor=white)](https://learn.microsoft.com/powershell/)
+[![Portable](https://img.shields.io/badge/path-portable-1f9d55)](#-getting-started)
 
-**Related (separate repos):**
-- [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods) — Windhawk mods  
-- [youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock) — Chrome extension  
-- [vlc-folder-audio](https://github.com/Nishanth1409/vlc-folder-audio) — VLC helper  
+</div>
+
+<div align="center">
+  <img src="docs/screenshots/hero-system-maintenance.png" alt="Windows System Maintenance hero" width="100%" />
+</div>
 
 ---
 
-## What this is
+## Why this exists
+
+Most “PC cleaner” tools are noisy, opaque, or locked to one install path. **System Maintenance** is a transparent toolkit you own: frequency-labeled jobs on the desktop context menu, scripts you can read, and a folder that works from any drive.
+
+> Built by **Nishanth K R** — *son of a farmer, always a farmer.*
+
+**Related repos:** [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods) · [youtube-music-float-dock](https://github.com/Nishanth1409/youtube-music-float-dock) · [vlc-folder-audio](https://github.com/Nishanth1409/vlc-folder-audio)
+
+---
+
+## What you can do
 
 | Level | You get |
 | :--- | :--- |
@@ -19,105 +34,110 @@ Desktop **right-click menu** + PowerShell helpers for Windows cleanup, updates, 
 | **Intermediate** | Admin + user maintenance scripts, Spicetify reapply |
 | **Pro** | App Groups, portable package, custom icons, full `GUIDE.md` |
 
-The toolkit runs from wherever you put it, on any drive. `Install_Menu.bat` rewrites the menu registry to match its own location, so no path editing is needed. `Add_Desktop_Menu.reg` ships `C:\SystemMaintenance` only as a placeholder. If you move the folder, re-run `Install_Menu.bat`.
+- **Quick Clean** — Windows temp + approved caches (personal data protected).
+- **Free Disk Space** — deeper cleanup including approved D: package/project caches.
+- **Update Windows / Apps** — Windows Update; winget + Chocolatey (Spotify + Spicetify last).
+- **Full Maintenance** — DISM / SFC + deep clean (`System_AllInOne.bat`).
+- **Fix Slow Explorer** — plus a preserved folder view profile.
+- **RAM Empty** — optional Sysinternals RAMMap (`app\RAMMap64.exe`, not redistributed).
+- **NVIDIA / Spicetify / App Groups** — submenu and helper scripts when you need them.
 
 ---
 
-## Install from scratch
+## Preview
 
-### 1. Requirements
-- Windows 10/11
-- PowerShell 5+ (built-in)
-- Admin rights for menu install and some scripts
+<div align="center">
+  <img src="docs/screenshots/feature-context-menu.png" alt="System Maintenance context menu" width="100%" />
+  <p><em>Desktop → Show more options → System Maintenance.</em></p>
+</div>
 
-### 2. Get the files
+<div align="center">
+  <img src="docs/screenshots/feature-maintenance-pass.png" alt="Maintenance pass overview" width="100%" />
+  <p><em>Cleanup, updates, and security — labeled by how often you run them.</em></p>
+</div>
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Menu | `.reg` + `Install_Menu.bat` (path-adaptive) |
+| Scripts | PowerShell 5+ · `.bat` launchers |
+| Docs | `GUIDE.md` · `DRIVE_LAYOUT.md` |
+| Icons | Custom Start / Explorer / NVIDIA assets under `icons\` |
+
+---
+
+## Getting started
+
+### Requirements
+
+- Windows 10/11 · PowerShell 5+ · Admin for menu install and some scripts
+
+### Clone (any drive)
+
 ```bash
 git clone https://github.com/Nishanth1409/windows-system-maintenance.git SystemMaintenance
 ```
-Put the folder anywhere you like — the menu adapts to its location.
 
-### 3. Install the desktop menu
+`Install_Menu.bat` rewrites the menu registry to match its own location — no path editing. If you move the folder, re-run it.
+
+### Install the desktop menu
+
 1. Right-click `Install_Menu.bat` → **Run as administrator**  
-   (it generates the menu registry for the current folder, then imports it)
 2. On Windows 11: desktop → right-click → **Show more options** → **System Maintenance**
 
-### 4. Optional tools
-- **Empty RAM** menu item needs Sysinternals **RAMMap** as `app\RAMMap64.exe` (download from Microsoft; not redistributed here).
+### Optional
 
----
+- Put Sysinternals **RAMMap64.exe** in `app\` for **RAM Empty** (download from Microsoft; not in this repo).  
+- Build a USB copy with `MAKE_PORTABLE_PACKAGE.bat`.
 
-## How to run (daily)
+### Daily use
 
 | Goal | Action |
 | :--- | :--- |
-| Quick clean | Menu → Quick Clean (Windows temp + `D:\Cache`; personal data protected) |
-| Free disk space | Menu → Free Space / Clean Drive (also prunes approved D: package/project caches) |
+| Quick clean | Menu → Quick Clean |
+| Free disk space | Menu → Free Space / Clean Drive |
 | Windows update | Menu → Update Windows |
-| App updates | Menu → Update Apps (winget + Chocolatey, then Spotify + Spicetify last) |
-| Full pass | Menu → Full Maintenance (`System_AllInOne.bat`; Spotify + Spicetify run last) |
-| Empty standby RAM | Menu → RAM Empty (`System_EmptyRAM.bat`) |
+| App updates | Menu → Update Apps |
+| Full pass | Menu → Full Maintenance |
+| Empty standby RAM | Menu → RAM Empty |
 
 Or run scripts directly:
+
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\System_QuickClean.ps1
 ```
 
----
-
-## Layout
+### Layout
 
 | Path | Purpose |
 | :--- | :--- |
-| `Add_Desktop_Menu.reg` / `Install_Menu.bat` | Context menu |
+| `Install_Menu.bat` / `Add_Desktop_Menu.reg` | Context menu |
 | `System_*.bat` | Menu launchers |
 | `scripts\` | PowerShell maintenance |
-| `icons\` | Menu, Start button, File Explorer icons |
+| `icons\` | Menu & custom icons |
 | `AppGroup\` | Taskbar app-group plans |
 | `GUIDE.md` | Full reference |
 
----
-
-## Optional custom icons
-
-| Goal | Script | Assets |
-| :--- | :--- | :--- |
-| Custom **File Explorer** icon (taskbar / Start / desktop shortcuts) | `scripts\Extract_FileExplorer_Icon.ps1` | `icons\file_explorer.ico` (built from `file_explorer_256.png`) |
-| Custom **Start button** (Windhawk taskbar styler + Matter theme) | `scripts\Apply_StartButton_Matter.ps1` | `icons\Start.png` |
-
-These scripts derive paths from the toolkit folder. After you **move** the folder, re-run the icon scripts (and `Install_Menu.bat`) so shortcuts and Windhawk settings keep working.
-
----
-
-## File Explorer view profile
-
-`scripts\System_ExplorerViewProfile.ps1` stores one view profile and every cleanup routine verifies
-it afterwards, so clearing caches never changes how folders look or sort.
-
-| Scope | View | Sort | Group |
-| :--- | :--- | :--- | :--- |
-| Normal folders | Extra large icons | Date modified, newest first | Date modified |
-| This PC | Tiles | Name, A→Z | Type |
-
-Run **Fix Slow Explorer** to reapply it to folders you have already opened. Edit the values at the
-top of that script to use a different profile. Shell bags are rewritten, never deleted.
-
----
-
-## Pro tips
-
-1. Read **`GUIDE.md`** before changing admin scripts.  
-2. Re-run `Install_Menu.bat` after editing the `.reg` or moving this folder.  
-3. Keep machine-only binaries and logs out of git (`app\`, `logs\` are ignored).  
-4. Build a USB copy with `MAKE_PORTABLE_PACKAGE.bat` for another PC.
-
----
-
-## Safety
+### Safety
 
 - Review scripts before running on a new machine.  
 - Elevate only when the guide/menu says so.  
-- No third-party EXE redistributables in this repo.
+- No third-party EXE redistributables in this repo.  
+- `app\` and `logs\` are gitignored.
 
 ## License
 
-Use for personal / portfolio purposes. Review before commercial reuse.
+Personal / portfolio use. Review before commercial reuse.
+
+---
+
+<div align="center">
+
+Made with care by **Nishanth K R** — *son of a farmer, always a farmer.*
+
+[Portfolio](https://nkrportfolio.vercel.app) · [GitHub](https://github.com/Nishanth1409)
+
+</div>
