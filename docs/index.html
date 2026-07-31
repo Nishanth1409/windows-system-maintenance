@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>System Maintenance — Desktop right-click maintenance for Windows</title>
+<meta name="description" content="A desktop context menu backed by readable PowerShell: quick clean, deep disk recovery, Windows and application updates, repair passes, Explorer fixes, and a Spicetify reapply." />
+<meta name="author" content="Nishanth K R" />
+<meta name="color-scheme" content="dark" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="System Maintenance — Desktop right-click maintenance for Windows" />
+<meta property="og:description" content="A desktop context menu backed by readable PowerShell: quick clean, deep disk recovery, Windows and application updates, repair passes, Explorer fixes, and a Spicetify reapply." />
+<meta property="og:url" content="https://nishanth1409.github.io/windows-system-maintenance/" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%228%22 fill=%22%2322c55e%22/%3E%3C/svg%3E" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600;650;700;750;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root{--a1:#22c55e;--a2:#14b8a6;--a3:#38bdf8}
+
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --bg:#05070e; --bg2:#080c17;
+  --txt:#eaf0fa; --mut:#93a3bd; --dim:#63748f;
+  --card:rgba(255,255,255,.042); --card2:rgba(255,255,255,.028);
+  --stroke:rgba(255,255,255,.085); --stroke2:rgba(255,255,255,.14);
+  --r:18px; --maxw:1180px;
+  --f:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fm:'JetBrains Mono',ui-monospace,'Cascadia Code',Consolas,monospace;
+}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--f);
+  -webkit-font-smoothing:antialiased;line-height:1.62;overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+
+/* ---------- background ---------- */
+.aurora{position:fixed;inset:-15% -10%;z-index:0;filter:blur(90px);opacity:.62;pointer-events:none}
+.blob{position:absolute;border-radius:50%;mix-blend-mode:screen}
+.b1{width:52vw;height:52vw;left:-8vw;top:-14vw;background:var(--a1);animation:drift1 26s ease-in-out infinite}
+.b2{width:46vw;height:46vw;right:-6vw;top:-6vw;background:var(--a2);animation:drift2 31s ease-in-out infinite}
+.b3{width:42vw;height:42vw;left:28vw;top:32vw;background:var(--a3);animation:drift3 36s ease-in-out infinite}
+@keyframes drift1{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(7vw,5vw,0) scale(1.14)}}
+@keyframes drift2{0%,100%{transform:translate3d(0,0,0) scale(1.06)}50%{transform:translate3d(-6vw,7vw,0) scale(.9)}}
+@keyframes drift3{0%,100%{transform:translate3d(0,0,0) scale(.95)}50%{transform:translate3d(5vw,-6vw,0) scale(1.15)}}
+.grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(120% 90% at 50% 0%,#000 25%,transparent 75%);
+  -webkit-mask-image:radial-gradient(120% 90% at 50% 0%,#000 25%,transparent 75%)}
+.vignette{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(120% 80% at 50% -10%,transparent 40%,rgba(5,7,14,.85) 100%)}
+.shell{position:relative;z-index:2}
+
+/* ---------- layout ---------- */
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding:0 26px}
+section{padding:96px 0;position:relative}
+section::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:-1;
+  background:radial-gradient(72% 55% at 50% 0%,color-mix(in srgb,var(--a2) 11%,transparent),transparent 72%)}
+section:nth-of-type(even)::before{
+  background:radial-gradient(72% 55% at 50% 0%,color-mix(in srgb,var(--a3) 10%,transparent),transparent 72%)}
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--mut);
+  border:1px solid var(--stroke);background:var(--card);padding:7px 14px;border-radius:999px}
+.eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--a1);
+  box-shadow:0 0 12px var(--a1);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+h1,h2,h3{line-height:1.14;letter-spacing:-.022em;margin:0}
+h1{font-size:clamp(2.5rem,6.2vw,4.5rem);font-weight:800}
+h2{font-size:clamp(1.85rem,3.6vw,2.75rem);font-weight:800}
+h3{font-size:1.12rem;font-weight:700;letter-spacing:-.01em}
+p{margin:0}
+.grad{background:linear-gradient(100deg,var(--a1),var(--a2) 42%,var(--a3) 78%,var(--a1));
+  background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:shimmer 9s linear infinite}
+@keyframes shimmer{to{background-position:220% 0}}
+.lead{color:var(--mut);font-size:1.06rem;max-width:64ch}
+.shead{max-width:70ch;margin-bottom:46px}
+.shead h2{margin:16px 0 14px}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:50;backdrop-filter:blur(18px) saturate(150%);
+  -webkit-backdrop-filter:blur(18px) saturate(150%);
+  background:linear-gradient(180deg,rgba(5,7,14,.82),rgba(5,7,14,.5));
+  border-bottom:1px solid var(--stroke)}
+.nav .wrap{display:flex;align-items:center;gap:18px;height:66px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:750;letter-spacing:-.01em;white-space:nowrap}
+.logo{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
+  background:linear-gradient(135deg,var(--a1),var(--a2) 55%,var(--a3));
+  color:#04070d;font-weight:900;font-size:13px;letter-spacing:-.03em;
+  box-shadow:0 6px 20px -6px var(--a2)}
+.nlinks{display:flex;gap:4px;margin-left:auto}
+.nlinks a{padding:8px 13px;border-radius:10px;font-size:14px;color:var(--mut);font-weight:550;
+  transition:.18s}
+.nlinks a:hover{color:var(--txt);background:var(--card)}
+.nav .btn{margin-left:8px}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:9px;padding:12px 20px;border-radius:12px;
+  font-size:14.5px;font-weight:650;border:1px solid transparent;cursor:pointer;transition:.2s;
+  white-space:nowrap}
+.btn svg{width:16px;height:16px}
+.btn-p{background:linear-gradient(135deg,var(--a1),var(--a2) 60%,var(--a3));color:#04070d;
+  box-shadow:0 14px 34px -14px var(--a2)}
+.btn-p:hover{transform:translateY(-2px);box-shadow:0 20px 42px -14px var(--a2)}
+.btn-g{background:var(--card);border-color:var(--stroke2);color:var(--txt)}
+.btn-g:hover{background:rgba(255,255,255,.08);transform:translateY(-2px)}
+.btn-s{padding:9px 15px;font-size:13.5px}
+
+/* ---------- hero ---------- */
+.hero{padding:86px 0 60px}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:56px;align-items:center}
+.hero h1{margin:20px 0 20px}
+.hero .lead{font-size:1.13rem}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin:32px 0 30px}
+.badges{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px}
+.pill{font-size:12px;font-weight:600;padding:5px 11px;border-radius:8px;color:var(--mut);
+  border:1px solid var(--stroke);background:var(--card2);font-family:var(--fm)}
+.stats{display:flex;flex-wrap:wrap;gap:14px;padding-top:26px;border-top:1px solid var(--stroke)}
+.stat{min-width:96px}
+.stat b{display:block;font-size:1.6rem;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.stat span{font-size:12.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+
+/* ---------- mock window ---------- */
+.mock{border-radius:16px;overflow:hidden;border:1px solid var(--stroke2);
+  background:linear-gradient(170deg,rgba(18,24,40,.95),rgba(8,11,20,.98));
+  box-shadow:0 40px 90px -30px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.03) inset;
+  backdrop-filter:blur(8px)}
+.mock.tilt{transform:perspective(1500px) rotateY(-7deg) rotateX(3deg);transition:.6s}
+.mock.tilt:hover{transform:perspective(1500px) rotateY(-2deg) rotateX(1deg)}
+.mock-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;
+  background:rgba(255,255,255,.035);border-bottom:1px solid var(--stroke)}
+.dots{display:flex;gap:6px}
+.dots i{width:10px;height:10px;border-radius:50%;background:#3a4459}
+.dots i:nth-child(1){background:#ff5f57}.dots i:nth-child(2){background:#febc2e}
+.dots i:nth-child(3){background:#28c840}
+.mock-title{font-size:12.5px;color:var(--mut);font-family:var(--fm);margin-left:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mock-body{padding:18px}
+.mock-glow{position:absolute;inset:0;pointer-events:none}
+.mock-holder{position:relative}
+.mock-holder::before{content:'';position:absolute;inset:-14% -8%;z-index:-1;border-radius:40px;
+  background:radial-gradient(60% 60% at 50% 50%,var(--a2),transparent 70%);opacity:.28;filter:blur(50px)}
+
+/* mock rows */
+.mrow{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;
+  border:1px solid transparent;transition:.2s}
+.mrow+.mrow{margin-top:4px}
+.mrow.act{background:linear-gradient(90deg,rgba(255,255,255,.07),transparent);
+  border-color:var(--stroke)}
+.mico{width:32px;height:32px;flex:0 0 auto;border-radius:9px;display:grid;place-items:center;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--a1) 26%,transparent),color-mix(in srgb,var(--a2) 20%,transparent));
+  border:1px solid var(--stroke);color:var(--txt)}
+.mico svg{width:16px;height:16px}
+.mtxt{min-width:0;flex:1}
+.mtxt b{display:block;font-size:13.5px;font-weight:650;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mtxt span{font-size:11.5px;color:var(--dim);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;display:block}
+.mtag{font-size:10.5px;font-family:var(--fm);color:var(--mut);border:1px solid var(--stroke);
+  padding:3px 8px;border-radius:7px;white-space:nowrap;flex:0 0 auto}
+.mhead{font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--dim);margin:16px 4px 8px}
+.mhead:first-child{margin-top:2px}
+.sw{width:38px;height:22px;border-radius:999px;flex:0 0 auto;position:relative;
+  background:rgba(255,255,255,.12);border:1px solid var(--stroke);transition:.2s}
+.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;
+  background:#8895ab;transition:.2s}
+.sw.on{background:linear-gradient(135deg,var(--a1),var(--a2))}
+.sw.on::after{left:18px;background:#fff}
+.mbar{height:6px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;flex:1}
+.mbar i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(90deg,var(--a1),var(--a2))}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;padding:6px 4px}
+.mchips span{font-size:11px;font-family:var(--fm);padding:4px 9px;border-radius:7px;
+  color:var(--mut);background:var(--card);border:1px solid var(--stroke)}
+.term{font-family:var(--fm);font-size:12.5px;line-height:1.85;padding:16px 18px}
+.term div{white-space:pre-wrap;word-break:break-word}
+.term .c{color:var(--a1)}.term .o{color:var(--mut)}.term .w{color:#f0b23a}
+.mstats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:4px}
+.mstat{padding:12px;border-radius:12px;background:var(--card);border:1px solid var(--stroke)}
+.mstat b{display:block;font-size:1.25rem;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;
+  background-clip:text;color:transparent}
+.mstat span{font-size:10.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.07em;
+  font-weight:600}
+.spark{display:flex;align-items:flex-end;gap:4px;height:56px;padding:6px 4px}
+.spark i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,var(--a1),var(--a2));
+  opacity:.85}
+
+/* ---------- marquee ---------- */
+.mq{overflow:hidden;border-top:1px solid var(--stroke);border-bottom:1px solid var(--stroke);
+  background:rgba(255,255,255,.02);padding:15px 0;
+  mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
+.mq-in{display:flex;gap:44px;width:max-content;animation:slide 32s linear infinite}
+.mq-in span{font-size:13px;font-weight:600;color:var(--dim);white-space:nowrap;font-family:var(--fm)}
+.mq-in span::after{content:'◆';margin-left:44px;color:var(--a2);opacity:.55}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* ---------- cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(292px,1fr));gap:20px}
+.card{position:relative;padding:26px;border-radius:var(--r);background:var(--card);
+  border:1px solid var(--stroke);overflow:hidden;transition:.28s}
+.card::after{content:'';position:absolute;inset:0;border-radius:var(--r);padding:1px;
+  background:linear-gradient(135deg,var(--a1),transparent 45%,transparent 60%,var(--a3));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:.28s;pointer-events:none}
+.card:hover{transform:translateY(-4px);background:rgba(255,255,255,.062)}
+.card:hover::after{opacity:.9}
+.tile{width:44px;height:44px;border-radius:13px;display:grid;place-items:center;margin-bottom:18px;
+  background:linear-gradient(135deg,var(--a1),var(--a2) 70%);color:#04070d;
+  box-shadow:0 10px 26px -10px var(--a2)}
+.tile svg{width:21px;height:21px}
+.card h3{margin-bottom:9px}
+.card p{color:var(--mut);font-size:14.5px}
+.num{position:absolute;top:20px;right:24px;font-family:var(--fm);font-size:2.6rem;font-weight:800;
+  color:rgba(255,255,255,.055);letter-spacing:-.04em;line-height:1}
+
+/* ---------- gallery ---------- */
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:24px}
+.gal figure{margin:0}
+.gal figcaption{color:var(--dim);font-size:13px;margin-top:12px;text-align:center}
+
+/* ---------- steps ---------- */
+.steps{display:grid;gap:18px}
+.step{display:grid;grid-template-columns:52px 1fr;gap:20px;padding:24px;border-radius:var(--r);
+  background:var(--card);border:1px solid var(--stroke)}
+.sn{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;
+  font-family:var(--fm);background:linear-gradient(135deg,var(--a1),var(--a2));color:#04070d}
+.step h3{margin-bottom:8px}
+.step p{color:var(--mut);font-size:14.5px;margin-bottom:14px}
+pre{margin:0;padding:15px 17px;border-radius:12px;background:rgba(0,0,0,.5);
+  border:1px solid var(--stroke);overflow-x:auto}
+code{font-family:var(--fm);font-size:12.8px;color:#cfe0f5;white-space:pre}
+.ln{color:var(--a1)}
+
+/* ---------- table ---------- */
+.tbl{border:1px solid var(--stroke);border-radius:var(--r);overflow:hidden;background:var(--card2)}
+.tr{display:grid;grid-template-columns:230px 1fr;gap:18px;padding:15px 22px;
+  border-bottom:1px solid var(--stroke);font-size:14.5px;align-items:center}
+.tr:last-child{border-bottom:none}
+.tr b{font-weight:650}
+.tr span{color:var(--mut)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+
+/* ---------- faq ---------- */
+details{border:1px solid var(--stroke);border-radius:14px;background:var(--card);
+  padding:0 20px;margin-bottom:12px;transition:.2s}
+details[open]{background:rgba(255,255,255,.058)}
+summary{cursor:pointer;padding:17px 0;font-weight:650;font-size:15px;list-style:none;
+  display:flex;align-items:center;gap:12px}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'+';font-family:var(--fm);color:var(--a1);font-weight:800;font-size:17px;
+  flex:0 0 auto;transition:.2s}
+details[open] summary::before{content:'−'}
+details p{color:var(--mut);font-size:14.5px;padding:0 0 18px 28px}
+
+/* ---------- cta band ---------- */
+.band{border-radius:24px;padding:56px 44px;text-align:center;position:relative;overflow:hidden;
+  border:1px solid var(--stroke2);
+  background:linear-gradient(135deg,rgba(255,255,255,.07),rgba(255,255,255,.02))}
+.band::before{content:'';position:absolute;inset:-60% -20%;
+  background:conic-gradient(from 0deg,var(--a1),var(--a2),var(--a3),var(--a1));
+  opacity:.16;animation:spin 22s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.band>*{position:relative}
+.band p{color:var(--mut);margin:14px auto 28px;max-width:56ch}
+.band .cta{justify-content:center;margin:0}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--stroke);padding:60px 0 44px;
+  background:linear-gradient(180deg,transparent,rgba(255,255,255,.022))}
+.fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:40px;margin-bottom:42px}
+.fgrid h4{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+  margin:0 0 16px;font-weight:700}
+.fgrid a{display:block;color:var(--mut);font-size:14px;padding:4px 0;transition:.18s}
+.fgrid a:hover{color:var(--a1)}
+.fbrand p{color:var(--mut);font-size:14px;margin-top:14px;max-width:40ch}
+.fbot{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;
+  padding-top:26px;border-top:1px solid var(--stroke);color:var(--dim);font-size:13.5px}
+.fbot em{color:var(--mut);font-style:italic}
+
+/* ---------- reveal ---------- */
+.rv{opacity:0;transform:translateY(26px);transition:.75s cubic-bezier(.16,1,.3,1)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- responsive ---------- */
+@media(max-width:1000px){
+  .hero-grid{grid-template-columns:1fr;gap:44px}
+  .mock.tilt{transform:none}
+  .fgrid{grid-template-columns:1fr 1fr}
+  .two{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  section{padding:70px 0}
+  .hero{padding:52px 0 40px}
+  .wrap{padding:0 18px}
+  .nlinks{display:none}
+  .tr{grid-template-columns:1fr;gap:4px}
+  .fgrid{grid-template-columns:1fr;gap:30px}
+  .band{padding:40px 22px}
+  .mstats{grid-template-columns:1fr}
+  .step{grid-template-columns:1fr;gap:14px}
+}
+@media(min-width:1700px){
+  :root{--maxw:1420px}
+  h1{font-size:5rem}
+  .hero{padding:110px 0 74px}
+  section{padding:118px 0}
+}
+
+</style>
+</head>
+<body>
+<div class="aurora"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<div class="grid-bg"></div>
+<div class="vignette"></div>
+
+<div class="shell">
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="logo">SM</span> System Maintenance</a>
+    <nav class="nlinks"><a href="#features">Features</a><a href="#preview">Preview</a><a href="#install">Install</a><a href="#stack">Stack</a><a href="#faq">FAQ</a></nav>
+    <a class="btn btn-g btn-s" href="https://github.com/Nishanth1409/windows-system-maintenance" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.4 6.2-1.5 6.2-6.7A5.2 5.2 0 0 0 19 4.8 4.9 4.9 0 0 0 18.9 1S17.6.6 15 2.4a12.3 12.3 0 0 0-6 0C6.4.6 5.1 1 5.1 1A4.9 4.9 0 0 0 5 4.8a5.2 5.2 0 0 0-1.4 3.6c0 5.2 3.2 6.3 6.2 6.7A3.4 3.4 0 0 0 9 17.7V22"/></svg> GitHub</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow"><span class="dot"></span>Windows 10/11 · PowerShell · Desktop menu</span>
+        <h1>PC maintenance from <span class="grad">one right-click</span></h1>
+        <p class="lead">A desktop context menu backed by readable PowerShell: quick clean, deep disk recovery, Windows and application updates, repair passes, Explorer fixes, and a Spicetify reapply.</p>
+        <div class="cta">
+          <a class="btn btn-p" href="#install"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><path d="M12 15V3"/></svg> Install the menu</a>
+          
+          <a class="btn btn-g" href="https://github.com/Nishanth1409/windows-system-maintenance" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.4 6.2-1.5 6.2-6.7A5.2 5.2 0 0 0 19 4.8 4.9 4.9 0 0 0 18.9 1S17.6.6 15 2.4a12.3 12.3 0 0 0-6 0C6.4.6 5.1 1 5.1 1A4.9 4.9 0 0 0 5 4.8a5.2 5.2 0 0 0-1.4 3.6c0 5.2 3.2 6.3 6.2 6.7A3.4 3.4 0 0 0 9 17.7V22"/></svg> Source</a>
+        </div>
+        <div class="badges"><span class="pill">PowerShell 5+</span><span class="pill">Runs from any drive</span><span class="pill">Frequency-labelled jobs</span><span class="pill">No bundled binaries</span></div>
+        <div class="stats"><div class="stat"><b>1</b><span>Right-click menu</span></div><div class="stat"><b>6</b><span>Routine jobs</span></div><div class="stat"><b>Any</b><span>Drive or USB stick</span></div></div>
+      </div>
+      <div class="mock-holder rv"><div class="mock tilt"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><div class="mock-title">Desktop → Show more options → System Maintenance</div></div><div class="mock-body"><div class="mrow act"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h6l1-6M13 3l8 8-6 1-4-4 2-5z"/><path d="M10 15 4 21"/></svg></div><div class="mtxt"><b>Quick Clean</b><span>Temp folders and approved caches</span></div><span class="mtag">Weekly</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 12h20M6 16h.01M10 16h.01"/></svg></div><div class="mtxt"><b>Free Disk Space</b><span>Deeper cache recovery</span></div><span class="mtag">Monthly</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6M3 22v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L21 8M20.5 15a9 9 0 0 1-14.9 3.4L3 16"/></svg></div><div class="mtxt"><b>Update Windows</b><span>Windows Update</span></div><span class="mtag">Monthly</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg></div><div class="mtxt"><b>Update Apps</b><span>winget and Chocolatey</span></div><span class="mtag">Monthly</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div><div class="mtxt"><b>Full Maintenance</b><span>DISM + SFC + deep clean</span></div><span class="mtag">Quarterly</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></div><div class="mtxt"><b>Fix Slow Explorer</b><span>Shell cache reset</span></div><span class="mtag">As needed</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div><div class="mtxt"><b>RAM Empty</b><span>Needs RAMMap64.exe in app\</span></div><span class="mtag">Optional</span></div></div></div></div>
+    </div>
+  </section>
+
+  <div class="mq"><div class="mq-in"><span>Quick Clean</span><span>Free Disk Space</span><span>Update Windows</span><span>Update Apps</span><span>Full Maintenance (DISM + SFC)</span><span>Fix Slow Explorer</span><span>RAM Empty</span><span>App Groups</span><span>Quick Clean</span><span>Free Disk Space</span><span>Update Windows</span><span>Update Apps</span><span>Full Maintenance (DISM + SFC)</span><span>Fix Slow Explorer</span><span>RAM Empty</span><span>App Groups</span></div></div>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="shead rv">
+        <span class="eyebrow"><span class="dot"></span>Features</span>
+        <h2>The jobs you actually repeat</h2>
+        <p class="lead">Each entry is labelled by how often it is worth running, so the menu tells you what to do instead of the other way round.</p>
+      </div>
+      <div class="cards"><div class="card rv"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h6l1-6M13 3l8 8-6 1-4-4 2-5z"/><path d="M10 15 4 21"/></svg></div><h3>Quick Clean</h3><p>Clears Windows temp folders and approved caches on demand. Personal folders are excluded by design, not by accident.</p></div><div class="card rv"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 12h20M6 16h.01M10 16h.01"/></svg></div><h3>Free Disk Space</h3><p>A deeper pass that also reclaims approved package and project caches from your secondary drive.</p></div><div class="card rv"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6M3 22v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L21 8M20.5 15a9 9 0 0 1-14.9 3.4L3 16"/></svg></div><h3>Update Windows and apps</h3><p>Runs Windows Update, then winget and Chocolatey — keeping Spotify and Spicetify last so the patch is not overwritten.</p></div><div class="card rv"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div><h3>Full Maintenance</h3><p>DISM and SFC repair combined with the deep clean in a single scripted pass you can leave running.</p></div><div class="card rv"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></div><h3>Fix slow Explorer</h3><p>Resets the shell caches that make Explorer crawl, then restores a saved folder view profile.</p></div><div class="card rv"><div class="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/></svg></div><h3>RAM Empty and App Groups</h3><p>Optional standby-memory release through Sysinternals RAMMap, plus taskbar app-group plans.</p></div></div>
+    </div>
+  </section>
+
+  <section id="preview">
+    <div class="wrap">
+      <div class="shead rv">
+        <span class="eyebrow"><span class="dot"></span>Preview</span>
+        <h2>Menu, output, and layout</h2>
+        <p class="lead">What you click, what it prints, and where every script lives inside the folder.</p>
+      </div>
+      <div class="gal"><figure class="rv"><div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><div class="mock-title">PowerShell — System_QuickClean.ps1</div></div><div class="mock-body" style="padding:0"><div class="term"><div class="c">PS&gt; .\scripts\System_QuickClean.ps1</div><div class="o">Scanning Windows temp .............. 1,284 files</div><div class="o">Delivery optimisation cache ....... 612 MB</div><div class="o">Thumbnail and icon cache .......... 88 MB</div><div class="w">Skipping user documents (protected)</div><div class="c">Reclaimed 4.7 GB in 41 s</div></div></div></div><figcaption>Every job prints what it touched and what it reclaimed.</figcaption></figure><figure class="rv"><div class="mock"><div class="mock-bar"><div class="dots"><i></i><i></i><i></i></div><div class="mock-title">Portable folder layout</div></div><div class="mock-body"><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m11 12 9-9 3 3-9 9M17 6l3 3"/></svg></div><div class="mtxt"><b>Install_Menu.bat</b><span>Rewrites menu paths on every run</span></div><span class="mtag">Admin</span></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><path d="M12 19h8"/></svg></div><div class="mtxt"><b>scripts\</b><span>PowerShell maintenance jobs</span></div></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div class="mtxt"><b>icons\</b><span>Menu, Start, and Explorer icons</span></div></div><div class="mrow"><div class="mico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v8a2 2 0 0 1-1 1.7l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.7l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></svg></div><div class="mtxt"><b>AppGroup\</b><span>Taskbar app-group plans</span></div></div><div class="mhead">Documentation</div><div class="mchips"><span>GUIDE.md</span><span>DRIVE_LAYOUT.md</span><span>MAKE_PORTABLE_PACKAGE.bat</span></div></div></div><figcaption>Install_Menu.bat rewrites the registry to wherever the folder lives.</figcaption></figure></div>
+      
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="shead rv">
+        <span class="eyebrow"><span class="dot"></span>Install</span>
+        <h2>Install once, from anywhere</h2>
+        <p class="lead">There is no installer to trust and no path to edit — the batch file adapts to its own location.</p>
+      </div>
+      <div class="steps"><div class="step rv"><div class="sn">1</div><div><h3>Clone it anywhere</h3><p>Any drive works. The folder name is up to you.</p><pre><code>git clone https://github.com/Nishanth1409/windows-system-maintenance.git SystemMaintenance</code></pre></div></div><div class="step rv"><div class="sn">2</div><div><h3>Install the desktop menu</h3><p>Right-click Install_Menu.bat and choose Run as administrator. It rewrites the registry entries to match its own folder, so moving the folder just means running it again.</p><pre><code>Right-click Install_Menu.bat  →  Run as administrator</code></pre></div></div><div class="step rv"><div class="sn">3</div><div><h3>Open it from the desktop</h3><p>On Windows 11, right-click the desktop, choose Show more options, then System Maintenance.</p></div></div><div class="step rv"><div class="sn">4</div><div><h3>Or call a script directly</h3><p>Every menu entry maps to a script you can run yourself, which is useful for scheduled tasks.</p><pre><code>powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\System_QuickClean.ps1</code></pre></div></div></div>
+    </div>
+  </section>
+
+  <section id="stack">
+    <div class="wrap two">
+      <div class="rv">
+        <span class="eyebrow"><span class="dot"></span>Under the hood</span>
+        <h2 style="margin:16px 0 14px">Built with</h2>
+        <p class="lead">A registry-backed context menu in front of plain PowerShell, with documentation for the parts that need judgement rather than automation.</p>
+      </div>
+      <div class="tbl rv"><div class="tr"><b>Menu</b><span>.reg plus Install_Menu.bat, path-adaptive</span></div><div class="tr"><b>Scripts</b><span>PowerShell 5+ with .bat launchers</span></div><div class="tr"><b>Documentation</b><span>GUIDE.md and DRIVE_LAYOUT.md</span></div><div class="tr"><b>Assets</b><span>Custom Start, Explorer, and NVIDIA icons</span></div></div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="shead rv">
+        <span class="eyebrow"><span class="dot"></span>FAQ</span>
+        <h2>Good to know</h2>
+      </div>
+      <details class="rv"><summary>Will it delete my files?</summary><p>No. The scripts target Windows temp locations and approved caches. Personal folders are excluded, and each script is short enough to read before you run it.</p></details><details class="rv"><summary>What happens if I move the folder?</summary><p>Re-run Install_Menu.bat. The menu entries are rewritten to the new path automatically.</p></details><details class="rv"><summary>Why is RAMMap not included?</summary><p>It is a Microsoft Sysinternals tool, and this repository does not redistribute third-party binaries. Drop RAMMap64.exe into app\ yourself to enable RAM Empty.</p></details><details class="rv"><summary>Can I carry it on a USB stick?</summary><p>Yes. MAKE_PORTABLE_PACKAGE.bat builds a copy you can move between machines.</p></details>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="band rv">
+        <h2>Own your maintenance routine</h2>
+        <p>Every job is a script you can open, read, and change. No black-box cleaner, no subscription, no telemetry.</p>
+        <div class="cta">
+          <a class="btn btn-p" href="https://github.com/Nishanth1409/windows-system-maintenance" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.4 6.2-1.5 6.2-6.7A5.2 5.2 0 0 0 19 4.8 4.9 4.9 0 0 0 18.9 1S17.6.6 15 2.4a12.3 12.3 0 0 0-6 0C6.4.6 5.1 1 5.1 1A4.9 4.9 0 0 0 5 4.8a5.2 5.2 0 0 0-1.4 3.6c0 5.2 3.2 6.3 6.2 6.7A3.4 3.4 0 0 0 9 17.7V22"/></svg> Open the repo</a>
+          <a class="btn btn-g" href="https://nkrportfolio.vercel.app" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6M10 14 21 3"/></svg> Portfolio</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="fgrid">
+      <div class="fbrand">
+        <div class="brand"><span class="logo">SM</span> System Maintenance</div>
+        <p>Desktop right-click maintenance for Windows. Built and maintained by Nishanth K R.</p>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <a href="https://github.com/Nishanth1409/windows-system-maintenance" target="_blank" rel="noopener">Repository</a>
+        <a href="#features">Features</a>
+        <a href="#install">Install guide</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div>
+        <h4>Credits</h4>
+        <a href="https://github.com/Nishanth1409" target="_blank" rel="noopener">Nishanth K R — author</a>
+        
+        <a href="https://nkrportfolio.vercel.app" target="_blank" rel="noopener">nkrportfolio.vercel.app</a>
+      </div>
+    </div>
+    <div class="fbot">
+      <span>© <span id="yr">2026</span> Nishanth K R · windows-system-maintenance</span>
+      <em>Son of a farmer · always a farmer.</em>
+    </div>
+  </div>
+</footer>
+</div>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+const io = new IntersectionObserver((es) => {
+  es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+}, { threshold: 0.08, rootMargin: '0px 0px -40px' });
+document.querySelectorAll('.rv').forEach((el, i) => {
+  el.style.transitionDelay = (i % 4 * 70) + 'ms';
+  io.observe(el);
+});
+// screenshot mode: ?still=1 disables animation and reveals everything
+if (new URLSearchParams(location.search).has('still')) {
+  document.querySelectorAll('.rv').forEach(el => { el.style.transitionDelay = '0ms'; el.classList.add('in'); });
+  const s = document.createElement('style');
+  s.textContent = '*{animation:none!important;transition:none!important}';
+  document.head.appendChild(s);
+}
+</script>
+</body>
+</html>
