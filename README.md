@@ -134,10 +134,20 @@ Personal / portfolio use. Review before commercial reuse.
 
 ---
 
+## Live & credits
+
+| | |
+| :--- | :--- |
+| **Author** | [Nishanth K R](https://github.com/Nishanth1409) |
+| **Repo** | [Nishanth1409/windows-system-maintenance](https://github.com/Nishanth1409/windows-system-maintenance) |
+| **Portfolio** | [nkrportfolio.vercel.app](https://nkrportfolio.vercel.app) |
+
+---
+
 <div align="center">
 
-Made with care by **Nishanth K R** — *son of a farmer, always a farmer.*
+*Son of a farmer · always a farmer.*
 
-[Portfolio](https://nkrportfolio.vercel.app) · [GitHub](https://github.com/Nishanth1409)
+[GitHub](https://github.com/Nishanth1409) · [Portfolio](https://nkrportfolio.vercel.app)
 
 </div>
