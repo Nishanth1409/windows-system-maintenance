@@ -1,4 +1,4 @@
-﻿# Machine-only / local artifacts (live PC install)
+﻿# Local-only artifacts
 logs/
 PortablePackage/
 app/
@@ -13,18 +13,16 @@ node_modules/
 .DS_Store
 Thumbs.db
 
-# tools\ — keep local helpers private; ship only public audits + launcher source
+# tools: ship audits + launcher source only
 tools/*
 !tools/_FinalCheck.ps1
 !tools/_ValidateScripts.ps1
 !tools/_AuditMenu.ps1
 !tools/_SmRunHidden.cs
 
-# Machine layout notes (not for public clone docs)
 DRIVE_LAYOUT.md
 DRIVE_LAYOUT.txt
 
-# Separate projects — never store second copies here
 windhawk/
 chrome-extensions/
 vlc/

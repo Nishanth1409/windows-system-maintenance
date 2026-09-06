@@ -1,23 +1,21 @@
-# Full health check — scripts, files, registry menu, winget, smoke tests
+# Runs _ValidateScripts + _AuditMenu. Exit 0 only if both pass.
 . (Join-Path (Split-Path $PSScriptRoot -Parent) '_Root.ps1')
-$toolsDir = $SMTools
 $fail = 0
 
-function Invoke-CheckScript {
-    param([string]$ScriptPath)
+function Invoke-Check([string]$Name) {
+    $path = Join-Path $SMTools $Name
     $proc = Start-Process -FilePath 'powershell.exe' -ArgumentList @(
-        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $ScriptPath
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $path
     ) -Wait -PassThru -WindowStyle Hidden
-    return $proc.ExitCode
+    if ($proc.ExitCode -ne 0) { $script:fail++ }
 }
 
-if ((Invoke-CheckScript (Join-Path $toolsDir '_ValidateScripts.ps1')) -ne 0) { $fail++ }
-if ((Invoke-CheckScript (Join-Path $toolsDir '_AuditMenu.ps1')) -ne 0) { $fail++ }
+Invoke-Check '_ValidateScripts.ps1'
+Invoke-Check '_AuditMenu.ps1'
 
 if ($fail -gt 0) {
     Write-Host "=== FINAL CHECK FAILED ($fail) ===" -ForegroundColor Red
     exit 1
 }
-
-Write-Host '=== FINAL CHECK PASSED — System Maintenance is ready ===' -ForegroundColor Green
+Write-Host '=== FINAL CHECK PASSED ===' -ForegroundColor Green
 exit 0
