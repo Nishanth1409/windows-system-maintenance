@@ -3,6 +3,11 @@ setlocal EnableExtensions
 title System Maintenance - Install Desktop Menu
 color 0A
 
+:: Clear "from the Internet" marks BEFORE any re-launch. Otherwise:
+:: double-click -> Security Warning -> Run -> this script asks for Admin and
+:: starts itself again -> SAME Security Warning again (feels like a loop).
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%~dp0.' -Recurse -Force -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue" >nul 2>&1
+
 :: Registry import requires Administrator
 net session >nul 2>&1
 if errorlevel 1 (

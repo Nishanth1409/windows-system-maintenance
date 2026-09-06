@@ -647,6 +647,18 @@ registry icons directly.
 | 3 | Friend's PC | Open folder → double-click `SETUP_NEW_PC.bat` → Yes on UAC |
 | 4 | Your PC | Delete `PortablePackage\` — rebuild next time instead of letting it go stale |
 
+**“Open File - Security Warning” / Run Cancel loop.** If the package came from a ZIP, USB, or browser download, Windows marks `.bat` / `.ps1` as *from the Internet*. Clicking **Run** does **not** clear that mark. `Install_Menu.bat` / `SETUP_NEW_PC.bat` then re-launch themselves for Administrator approval, so Windows shows the **same** Run/Cancel dialog again — that is the “loop.”
+
+Fix once on the PC:
+
+1. Double-click `Unblock_Here.bat` in the toolkit folder, **or** run:
+   ```powershell
+   Get-ChildItem C:\SystemMaintenance -Recurse -Force | Unblock-File
+   ```
+2. Then run `Install_Menu.bat` / `SETUP_NEW_PC.bat` again — you should only get **UAC (Yes)**, not Run/Cancel again.
+
+`SETUP_NEW_PC.bat` and `Install_Menu.bat` now unblock **before** they elevate, so a fresh package should not loop.
+
 Includes scripts, `RAMMap64.exe`, registry, icons, and this guide.
 
 `SETUP_NEW_PC.bat` lives in the source root so the package is fully regenerable. On the target PC it copies to `C:\SystemMaintenance` (a real folder there), then calls `Install_Menu.bat` rather than repeating its steps, so the NVIDIA de-duplicate and the guard task are set up too. `Install_Menu.bat` generates the menu registry for whatever path it lands in, so the destination is not fixed. If the source and destination resolve to the same folder, the script skips the copy instead of overwriting its own source.

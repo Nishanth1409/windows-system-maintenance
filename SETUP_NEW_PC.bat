@@ -6,6 +6,11 @@ color 0B
 set "SRC=%~dp0"
 set "DEST=C:\SystemMaintenance"
 
+:: Unblock THIS package folder first. Elevation re-launches this .bat; if the
+:: file is still marked "from the Internet", Windows shows the same
+:: Run/Cancel Security Warning again after you click Run.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%SRC%.' -Recurse -Force -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue" >nul 2>&1
+
 :: Must run as Administrator (registry + copy to C:\)
 net session >nul 2>&1
 if errorlevel 1 (
@@ -43,6 +48,13 @@ if "%SAMEDIR%"=="1" (
     )
     echo       Done.
 )
+
+:: ZIP/USB/browser copies often mark .bat/.ps1 as "from the Internet". That
+:: triggers "Open File - Security Warning" (Run / Cancel) on every double-click
+:: and feels like a loop when Install_Menu chains more scripts. Clear MOTW.
+echo.
+echo  [1b/3] Clearing download blocks ^(Zone.Identifier^) on %DEST% ...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%DEST%' -Recurse -Force -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue; Write-Host '      Unblocked.'"
 
 echo.
 echo  [2/3] Installing desktop menu ^(icons, registry, NVIDIA de-duplicate^) ...
