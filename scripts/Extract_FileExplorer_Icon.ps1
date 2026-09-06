@@ -28,16 +28,39 @@ foreach ($candidate in @($pngPath, $altPng)) {
     if (Test-Path -LiteralPath $candidate) { $source = $candidate; break }
 }
 
-$py = Get-Command python -ErrorAction SilentlyContinue
-$canBuild = $source -and $py
+function Get-RealPythonCommand {
+    foreach ($name in @('py', 'python3', 'python')) {
+        $cmd = Get-Command $name -ErrorAction SilentlyContinue
+        if (-not $cmd) { continue }
+        # Windows Store alias prints "Python was not found" and exits non-zero.
+        if ($cmd.Source -like '*\WindowsApps\python*.exe') { continue }
+        if ($cmd.Source -like '*\WindowsApps\py.exe') { continue }
+        try {
+            $null = & $cmd.Source --version 2>&1
+            if ($LASTEXITCODE -eq 0) { return $cmd }
+        } catch { }
+    }
+    return $null
+}
+
+$py = Get-RealPythonCommand
+$canBuild = $source -and $py -and (Test-Path -LiteralPath $pyBuild)
 
 if ($canBuild) {
     & $py.Source $pyBuild $source
-    if ($LASTEXITCODE -ne 0) { throw 'ICO build failed' }
-    Write-Host "Saved: $icoPath"
+    if ($LASTEXITCODE -ne 0) {
+        if (Test-Path -LiteralPath $icoPath) {
+            Write-Host "ICO rebuild skipped (Python build failed); using existing $icoPath"
+        } else {
+            throw 'ICO build failed and no prebuilt file_explorer.ico is present'
+        }
+    } else {
+        Write-Host "Saved: $icoPath"
+    }
 } elseif (Test-Path -LiteralPath $icoPath) {
     if (-not $source) { Write-Host "No source PNG; applying existing $icoPath" }
     elseif (-not $py) { Write-Host "Python not available; applying existing $icoPath" }
+    else { Write-Host "Applying existing $icoPath" }
 } else {
     throw "No icon to apply: need $pngPath (or $altPng) plus Python, or a prebuilt $icoPath"
 }

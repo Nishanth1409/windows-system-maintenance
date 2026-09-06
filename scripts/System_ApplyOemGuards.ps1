@@ -49,4 +49,5 @@ if ($oem.ApplyAwccGuards) {
     Write-Host '  AWCC guards: skipped on this PC'
 }
 
-return $oem
+# Do not emit the OEM object when -Silent (powershell -File prints return values).
+if (-not $Silent) { $oem }
