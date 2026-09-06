@@ -6,12 +6,10 @@ color 0B
 set "SRC=%~dp0"
 set "DEST=C:\SystemMaintenance"
 
-:: Unblock THIS package folder first. Elevation re-launches this .bat; if the
-:: file is still marked "from the Internet", Windows shows the same
-:: Run/Cancel Security Warning again after you click Run.
+REM Unblock this package first so the admin re-launch does not show Run/Cancel again.
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%SRC%.' -Recurse -Force -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue" >nul 2>&1
 
-:: Must run as Administrator (registry + copy to C:\)
+REM Must run as Administrator
 net session >nul 2>&1
 if errorlevel 1 (
     echo.
@@ -29,16 +27,16 @@ echo.
 echo  Source : %SRC%
 echo  Install: %DEST%
 echo.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%SRC%scripts\System_OemProfile.ps1" -Print
+echo.
 
-:: On the authoring PC, DEST is a junction back to SRC. Copying would have the
-:: package overwrite its own source, so resolve the junction and compare targets.
 set "SAMEDIR=0"
 for /f "usebackq delims=" %%R in (`powershell -NoProfile -Command "$s=(Resolve-Path '%SRC%.').Path.TrimEnd('\'); $d='%DEST%'; if(Test-Path $d){$i=Get-Item $d -Force; if($i.LinkType){$d=@($i.Target)[0]}; $d=(Resolve-Path $d).Path.TrimEnd('\')}; if($s -ieq $d){'1'}else{'0'}"`) do set "SAMEDIR=%%R"
 
 if "%SAMEDIR%"=="1" (
-    echo  [1/3] %DEST% already points at this folder - skipping copy.
+    echo  [1/4] %DEST% already points at this folder - skipping copy.
 ) else (
-    echo  [1/3] Copying all files to %DEST% ...
+    echo  [1/4] Copying all files to %DEST% ...
     if not exist "%DEST%" mkdir "%DEST%"
     robocopy "%SRC%." "%DEST%" /E /XD PortablePackage /XF RAMMap_Empty.log /R:2 /W:2 /NFL /NDL /NJH /NJS /NP
     if errorlevel 8 (
@@ -49,20 +47,17 @@ if "%SAMEDIR%"=="1" (
     echo       Done.
 )
 
-:: ZIP/USB/browser copies often mark .bat/.ps1 as "from the Internet". That
-:: triggers "Open File - Security Warning" (Run / Cancel) on every double-click
-:: and feels like a loop when Install_Menu chains more scripts. Clear MOTW.
 echo.
-echo  [1b/3] Clearing download blocks ^(Zone.Identifier^) on %DEST% ...
+echo  [2/4] Clearing download blocks on %DEST% ...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -LiteralPath '%DEST%' -Recurse -Force -ErrorAction SilentlyContinue | Unblock-File -ErrorAction SilentlyContinue; Write-Host '      Unblocked.'"
 
 echo.
-echo  [2/3] Installing desktop menu ^(icons, registry, NVIDIA de-duplicate^) ...
-call "%DEST%\Install_Menu.bat"
+echo  [3/4] Installing desktop menu ...
+call "%DEST%\Install_Menu.bat" -NoPause
 
 echo.
-echo  [3/3] Registering NVIDIA duplicate-menu guard task ...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DEST%\scripts\Install_NvidiaMenuGuard.ps1" -Silent -Elevated
+echo  [4/4] Applying brand-specific guards again ...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DEST%\scripts\System_ApplyOemGuards.ps1" -Root "%DEST%" -Silent
 
 echo.
 echo  Verifying key files ...
@@ -71,9 +66,8 @@ if not exist "%DEST%\app\RAMMap64.exe" (
     echo  WARNING: app\RAMMap64.exe missing - RAM Map Empty will not work.
     set "MISSING=1"
 )
-if not exist "%DEST%\Add_Desktop_Menu.reg" set "MISSING=1"
-if not exist "%DEST%\System_AllInOne.bat" set "MISSING=1"
 if not exist "%DEST%\scripts\System_UpdateApps.ps1" set "MISSING=1"
+if not exist "%DEST%\scripts\System_HideNvidiaDesktopMenu.ps1" set "MISSING=1"
 
 echo.
 echo  ============================================
@@ -84,7 +78,7 @@ echo  Right-click desktop - Show more options - System Maintenance
 echo  Full guide: %DEST%\GUIDE.md
 echo.
 
-powershell.exe -NoProfile -Command "Add-Type -AssemblyName System.Windows.Forms; [void][System.Windows.Forms.MessageBox]::Show('System Maintenance is installed on this PC.`n`nFolder: C:\SystemMaintenance`n`nRight-click desktop - Show more options - System Maintenance`n`nRead GUIDE.md for the schedule.','Setup Complete','OK','Information')"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%DEST%\scripts\Show_SetupComplete.ps1"
 
 if "%MISSING%"=="1" (
     echo  Some files may be missing. Re-copy the full package and run again.

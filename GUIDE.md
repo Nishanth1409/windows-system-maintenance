@@ -5,7 +5,7 @@
 **(Chrome extensions and Windhawk are separate GitHub projects — not stored in this folder.)**  
 **Menu:** Desktop right-click → **Show more options** (Windows 11) → **System Maintenance**  
 **Install menu:** `Install_Menu.bat`  
-**Last updated:** 21 July 2026 (Alienware keyboard / AlienFX lighting facts)
+**Last updated:** 6 September 2026 (OEM auto-detect + setup loop fix)
 
 ---
 
@@ -488,10 +488,13 @@ D:\Projects\tools\SystemMaintenance\
 | File / folder | Purpose |
 |------|---------|
 | `GUIDE.md` | **This document** — complete reference |
-| `Install_Menu.bat` | Re-apply desktop menu (UAC) — icons, registry, NVIDIA hide |
-| `SETUP_NEW_PC.bat` | One-click install on another PC (copy → `Install_Menu.bat` → guard task) |
+| `Install_Menu.bat` | Re-apply desktop menu (UAC) — icons, registry, NVIDIA hide, OEM guards |
+| `SETUP_NEW_PC.bat` | One-click install on another PC (copy → `Install_Menu.bat` → OEM guards) |
 | `Add_Desktop_Menu.reg` | Registry source for context menu |
 | `tools\_FinalCheck.ps1` | Full health check (`_ValidateScripts` + `_AuditMenu`) |
+| `scripts\System_OemProfile.ps1` | Detect manufacturer / family; gate NVIDIA + AWCC steps |
+| `scripts\System_ApplyOemGuards.ps1` | Apply only NVIDIA / AWCC guards that match this PC |
+| `scripts\Show_SetupComplete.ps1` | Setup finished MessageBox (safe newlines) |
 | `scripts\System_MaintenanceProtect.ps1` | Clipboard protection + shared temp/prefetch cleanup |
 | `scripts\System_HideNvidiaDesktopMenu.ps1` | Remove duplicate NVIDIA desktop context menu entries |
 | `scripts\Install_NvidiaMenuGuard.ps1` | Register/remove the scheduled task that auto-runs the NVIDIA hide script |
@@ -647,6 +650,8 @@ registry icons directly.
 | 3 | Friend's PC | Open folder → double-click `SETUP_NEW_PC.bat` → Yes on UAC |
 | 4 | Your PC | Delete `PortablePackage\` — rebuild next time instead of letting it go stale |
 
+**OEM auto-detect.** Setup prints manufacturer / model / family (`Alienware`, `ASUS`, `Dell`, …) via `scripts\System_OemProfile.ps1`. NVIDIA duplicate hide runs only when an NVIDIA GPU is present. AWCC Welcome/overlay guards run only on Alienware (or when AWCC is installed). ASUS TUF / MyASUS / Armoury Crate are left alone — no Alienware steps.
+
 **“Open File - Security Warning” / Run Cancel loop.** If the package came from a ZIP, USB, or browser download, Windows marks `.bat` / `.ps1` as *from the Internet*. Clicking **Run** does **not** clear that mark. `Install_Menu.bat` / `SETUP_NEW_PC.bat` then re-launch themselves for Administrator approval, so Windows shows the **same** Run/Cancel dialog again — that is the “loop.”
 
 Fix once on the PC:
@@ -658,6 +663,8 @@ Fix once on the PC:
 2. Then run `Install_Menu.bat` / `SETUP_NEW_PC.bat` again — you should only get **UAC (Yes)**, not Run/Cancel again.
 
 `SETUP_NEW_PC.bat` and `Install_Menu.bat` now unblock **before** they elevate, so a fresh package should not loop.
+
+**CMD `tlocal` / `tle` / `errorlevel` spam + Ctrl+C to stop.** That was a separate bug: `::` comments containing parentheses broke `cmd` parsing inside `(...)` blocks, so lines like `setlocal` / `title` / `color` were eaten and the elevate path misbehaved. Fixed September 2026 — comments use `REM` with no parentheses. Replace the old `Install_Menu.bat` / `SETUP_NEW_PC.bat` on the other PC (re-copy the portable package), then re-run setup.
 
 Includes scripts, `RAMMap64.exe`, registry, icons, and this guide.
 
@@ -685,9 +692,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMain
 | Rule | Detail |
 |------|--------|
 | Your menu | `Perz_02_NVIDIA` submenu — App + Control Panel only |
-| Blocked | `NvCplDesktopContext`, `NvAppDesktopContext` shellex handlers |
-| After GPU/driver update | Handled automatically by the guard task below |
-| Manual fallback | Run **Update All Apps** or `Install_Menu.bat` — auto-hides duplicates |
+| Blocked | `NvCplDesktopContext`, `NvAppDesktopContext`, `NvGpuShExtDesktopContext`, other `Nv*` shellex / Shell entries (keeps `Perz_02_NVIDIA`) |
+| After GPU/driver / NVIDIA App update | Guard task re-hides; or run `Install_Menu.bat` once |
+| Manual fallback | Admin PowerShell: `System_HideNvidiaDesktopMenu.ps1` then `Install_NvidiaMenuGuard.ps1` |
 
 **Guard task.** NVIDIA app self-updates (scheduled task `NVIDIA App SelfUpdate_{...}`) re-create `NvCplDesktopContext`, which puts a second **NVIDIA Control Panel** entry on the desktop menu outside your submenu. Every removal trigger used to be manual, so the duplicate survived until you happened to run a script.
 
@@ -969,6 +976,19 @@ An NVIDIA app update restored `NvCplDesktopContext`, putting a stray **NVIDIA Co
 | `scripts\Install_NvidiaMenuGuard.ps1` | New — registers `\SystemMaintenance\HideNvidiaDesktopMenu` (logon + every 6 h) so the duplicate is removed without waiting for a manual script run |
 | `System_HideNvidiaDesktopMenu.ps1` — `Removed` list fixed | The elevated pass runs in a child process, so the parent's second removal pass always found nothing and reported `Removed = {}`. It now diffs a before/after snapshot. This silently suppressed the NVIDIA note in **Update All Apps**, which gates on `Removed.Count` |
 | `System_HideNvidiaDesktopMenu.ps1` — `-NoExplorerRestart` | Added so the elevated child skips the restart and the parent performs exactly one, now that the parent correctly sees the removals |
+
+### September 2026 — OEM adapt + setup loop fix
+
+Brother’s ASUS TUF (not Alienware) hit a broken setup: CMD printed `tlocal` / `tle` / `errorlevel`, needed Ctrl+C, MessageBox showed literal `\n`, and NVIDIA App updates left a stray desktop menu entry.
+
+| Change | Reason |
+|--------|--------|
+| `Install_Menu.bat` / `SETUP_NEW_PC.bat` rewrite | `::` comments with parentheses corrupted `cmd` blocks; REM + no paren comments; `-NoPause` when called from setup |
+| `Show_SetupComplete.ps1` | MessageBox text without bat-escaped backticks |
+| `System_OemProfile.ps1` + `System_ApplyOemGuards.ps1` | Auto-detect Alienware / ASUS / Dell / …; skip AWCC on non-Alienware; NVIDIA hide only if GPU present |
+| `System_AwccOverlayGuard.ps1` early exit | No AWCC folder → run Explorer restart action unchanged |
+| `System_HideNvidiaDesktopMenu.ps1` | Extra handler names + Directory\Background + WOW6432Node roots after NVIDIA App updates |
+| GUIDE §11.7 | Document OEM adapt + both loop types (MOTW vs bat parse) |
 
 ### July 2026 — Duplicate file cleanup (single source of truth)
 

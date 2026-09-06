@@ -9,26 +9,33 @@ param(
 $handlerNames = @(
     'NvCplDesktopContext',
     'NvAppDesktopContext',
-    'NvGpuShExtDesktopContext'
+    'NvGpuShExtDesktopContext',
+    'NvApp',
+    'NVIDIAApp',
+    'NvDesktopContext'
 )
 
 $handlerRoots = @(
     'Registry::HKEY_CLASSES_ROOT\Directory\Background\shellex\ContextMenuHandlers',
     'Registry::HKEY_CLASSES_ROOT\DesktopBackground\shellex\ContextMenuHandlers',
     'HKLM:\SOFTWARE\Classes\Directory\Background\shellex\ContextMenuHandlers',
-    'HKLM:\SOFTWARE\Classes\DesktopBackground\shellex\ContextMenuHandlers'
+    'HKLM:\SOFTWARE\Classes\DesktopBackground\shellex\ContextMenuHandlers',
+    'HKLM:\SOFTWARE\WOW6432Node\Classes\Directory\Background\shellex\ContextMenuHandlers',
+    'HKLM:\SOFTWARE\WOW6432Node\Classes\DesktopBackground\shellex\ContextMenuHandlers'
 )
 
 $shellRoots = @(
     'Registry::HKEY_CLASSES_ROOT\DesktopBackground\Shell',
-    'HKLM:\SOFTWARE\Classes\DesktopBackground\Shell'
+    'Registry::HKEY_CLASSES_ROOT\Directory\Background\Shell',
+    'HKLM:\SOFTWARE\Classes\DesktopBackground\Shell',
+    'HKLM:\SOFTWARE\Classes\Directory\Background\Shell'
 )
 
 function Test-NvidiaShellEntry {
     param([string]$Name)
 
     if ($Name -eq 'Perz_02_NVIDIA') { return $false }
-    return ($Name -match '^(Nv|NVIDIA)' -or $Name -like '*NvCpl*' -or $Name -like '*NvApp*')
+    return ($Name -match '^(Nv|NVIDIA)' -or $Name -like '*NvCpl*' -or $Name -like '*NvApp*' -or $Name -like '*NVIDIA*')
 }
 
 # Snapshot of every entry this script would delete, so the caller can diff

@@ -89,7 +89,14 @@ function Set-AwccOnboardingComplete {
 function Invoke-WithAwccOverlaySuppressed {
     param([scriptblock]$Action)
 
-    $orchPath = Join-Path $env:LOCALAPPDATA 'Alienware\Alienware Command Center\Core\OrchestratorSettings.json'
+    # Non-Alienware PCs (ASUS TUF, etc.): no AWCC folder — run Action as-is.
+    $awccRoot = Join-Path $env:LOCALAPPDATA 'Alienware\Alienware Command Center'
+    if (-not (Test-Path -LiteralPath $awccRoot)) {
+        if ($Action) { return & $Action }
+        return
+    }
+
+    $orchPath = Join-Path $awccRoot 'Core\OrchestratorSettings.json'
     $orchBackup = $null
     $hadAutoRun = $false
 
