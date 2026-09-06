@@ -1,7 +1,6 @@
 ﻿# Machine-only / local artifacts (live PC install)
 logs/
 PortablePackage/
-tools/
 app/
 .vscode/
 .cursor/
@@ -13,6 +12,13 @@ RAMMap64.exe
 node_modules/
 .DS_Store
 Thumbs.db
+
+# tools\ — keep local helpers private; ship only public audits + launcher source
+tools/*
+!tools/_FinalCheck.ps1
+!tools/_ValidateScripts.ps1
+!tools/_AuditMenu.ps1
+!tools/_SmRunHidden.cs
 
 # Machine layout notes (not for public clone docs)
 DRIVE_LAYOUT.md
