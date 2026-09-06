@@ -4,6 +4,7 @@ Add-Type -AssemblyName System.Windows.Forms
 $base = $PSScriptRoot
 . (Join-Path $base 'System_WingetHelpers.ps1')
 . (Join-Path $base 'System_SpotifySpicetifyCore.ps1')
+. (Join-Path $base 'System_LogiOptionsProtect.ps1')
 
 function Add-UpdateNote {
     param($Result, [string]$Label)
@@ -74,9 +75,11 @@ Direct path (if winget alias is broken):
         'Update coverage:',
         '  - Winget: community + Microsoft Store + fonts',
         '  - Scopes: Administrator machine + User',
-        '  - Mode: in-place upgrade only (extensions, shortcuts, settings kept)',
+        '  - Mode: in-place UPGRADE only for EVERY app (never uninstall / never erase settings)',
+        '  - Banned: --force, --uninstall-previous, purge (Chrome/Logi/browser data stays)',
         '  - Nilesoft Shell: not updated, not touched by maintenance',
-        '  - Chocolatey: all except nilesoft-shell',
+        '  - Logi Options+: may update; mouse settings backed up first + auto-restored if wiped',
+        '  - Chocolatey: upgrade only (no --force); nilesoft-shell excluded',
         '  - Final step: Spotify official installer + Spicetify update and theme re-apply'
     )
     $coverageNote = $coverageLines -join [Environment]::NewLine
@@ -95,6 +98,11 @@ Direct path (if winget alias is broken):
     }
     if (-not $shouldProceed) { return }
 
+    $logiBackup = Backup-LogiOptionsSettings -Reason 'pre-update-apps'
+    if ($logiBackup.Ok) {
+        $script:updateNotes.Add('Logi Options+: ' + $logiBackup.Note) | Out-Null
+    }
+
     $adminScript = Join-Path $base 'System_WingetAdmin.ps1'
     if (Test-Path $adminScript) {
         $adminResult = & $adminScript -ShowProgress
@@ -109,6 +117,9 @@ Direct path (if winget alias is broken):
 
     $chocoResult = Start-ChocoUpgradeSession
     Add-UpdateNote -Result $chocoResult -Label 'Chocolatey'
+
+    $logiRepair = Repair-LogiOptionsSettingsAfterUpdate
+    $script:updateNotes.Add('Logi Options+: ' + $logiRepair.Note) | Out-Null
 
     $after = Get-RemainingUpgradeScan
     $remainText = ''

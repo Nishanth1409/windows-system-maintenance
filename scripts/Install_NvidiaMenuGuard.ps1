@@ -45,9 +45,14 @@ if (-not (Test-Path -LiteralPath $hideScript)) {
 
 # Runs as the interactive user with highest privileges: the task is already
 # elevated (so -Elevated skips the UAC path) and Restart-ExplorerSafe still
-# relaunches Explorer into the user's session rather than session 0.
-$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument (
-    '-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File ' +
+# relaunches Explorer into the user's session rather than session 0. That rules
+# out running it as a session-0 task, so SmRunHidden.exe suppresses the console
+# instead - "powershell.exe -WindowStyle Hidden" briefly flashes a window.
+. (Join-Path $PSScriptRoot 'System_HiddenLauncherCore.ps1')
+$launcher = Resolve-HiddenLauncher -TargetRoot $TargetRoot
+
+$action = New-ScheduledTaskAction -Execute $launcher -Argument (
+    'powershell.exe -NoProfile -ExecutionPolicy Bypass -File ' +
     "`"$hideScript`" -Silent -Elevated")
 
 $logonTrigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME

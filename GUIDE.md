@@ -495,6 +495,12 @@ D:\Projects\tools\SystemMaintenance\
 | `scripts\System_MaintenanceProtect.ps1` | Clipboard protection + shared temp/prefetch cleanup |
 | `scripts\System_HideNvidiaDesktopMenu.ps1` | Remove duplicate NVIDIA desktop context menu entries |
 | `scripts\Install_NvidiaMenuGuard.ps1` | Register/remove the scheduled task that auto-runs the NVIDIA hide script |
+| `scripts\System_LockScreenPrune.ps1` | Delete disposable wallpaper backup copies, keeping the active image + newest |
+| `scripts\Install_LockScreenPruneGuard.ps1` | Register/remove the scheduled task that auto-runs the wallpaper prune |
+| `scripts\System_LogiOptionsProtect.ps1` | Backup/restore Logi Options+ mouse settings around app updates; paths protected from cleanup |
+| `scripts\System_HiddenLauncherCore.ps1` | Resolves/builds `SmRunHidden.exe` for the guard tasks |
+| `tools\_SmRunHidden.cs` | Source of the windowless launcher (GUI subsystem, no console) |
+| `tools\SmRunHidden.exe` | Built launcher — keeps scheduled tasks from flashing a console |
 | `scripts\System_AwccOverlayGuard.ps1` | Suppress Alienware overlay during Explorer restart |
 | `scripts\System_WingetHelpers.ps1` | Winget/chocolatey scans; direct `winget.exe` path |
 | `scripts\System_WindowsJunk.ps1` | Old Windows file cleanup (Deep / Admin) |
@@ -679,9 +685,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMain
 |------|--------|
 | Triggers | At logon (2 min delay) + every 6 hours |
 | Runs as | Interactive user, **Run with highest privileges** |
-| Action | `System_HideNvidiaDesktopMenu.ps1 -Silent -Elevated` |
+| Action | `tools\SmRunHidden.exe powershell.exe … System_HideNvidiaDesktopMenu.ps1 -Silent -Elevated` |
 
-Run as the interactive user, not SYSTEM — `Restart-ExplorerSafe` must relaunch Explorer into the user's session, and a SYSTEM task would put it in session 0. `-Elevated` is safe here because the task is already elevated; it just skips the UAC prompt path.
+Run as the interactive user, not SYSTEM — `Restart-ExplorerSafe` must relaunch Explorer into the user's session, and a SYSTEM task would put it in session 0. `-Elevated` is safe here because the task is already elevated; it just skips the UAC prompt path. The `SmRunHidden.exe` wrapper is what keeps the run invisible — see §11.14.
 
 ```powershell
 # install / re-install
@@ -696,6 +702,17 @@ The task is a no-op when nothing is present; Explorer is restarted only when an 
 
 Restarting Explorer triggers Alienware Command Center overlay when `AutoRun` is enabled.  
 `System_AwccOverlayGuard.ps1` temporarily disables overlay auto-launch, marks onboarding complete, and closes overlay windows during restart. In-game overlay (Ctrl+Shift+Y) still works afterward.
+
+**Welcome wizard every open / reboot.** That is the full `AWCC.exe` app (dark **Welcome!** card with Start Now / Don't Show Again), not the overlay. On current AWCC builds the flag is inverted from its name:
+
+| `OnBoardScreen` value | Effect |
+|------|--------|
+| `"True"` | Welcome **hidden** (completed) |
+| `"False"` | Welcome **shown** every open |
+
+File: `%LocalAppData%\Alienware\Alienware Command Center\Common\UserSetting.json`.
+
+An older revision of `System_AwccOverlayGuard.ps1` wrote `"False"` (thinking that meant dismissed) and that made Welcome appear on every open — including after Fix Slow Explorer. The guard now writes `"True"`. If Welcome returns after an AWCC update, run Fix Slow Explorer once, or set `OnBoardScreen` to `"True"` and reopen AWCC.
 
 ### 11.11 WinGet on this PC
 
@@ -762,6 +779,36 @@ Dell lights-off / Go Dark reference: [KB 000211659](https://www.dell.com/support
 | “Fn+F2 turns everything dark” | Stealth turns AlienFX off but leaves keyboard **white** (by design). Wrong tool for blackout. |
 | “Delete `%AppData%\Alienware` profiles” | Risky. On this PC AWCC lives under `%LocalAppData%\Alienware\Alienware Command Center\`. Prefer AWCC UI reset, AWCC reinstall from Dell, or BIOS/keyboard firmware — not blind folder deletes. |
 | Acer Helios / other brands in the same AI answer | Wrong product — ignore. |
+
+### 11.14 Windowless scheduled tasks (`SmRunHidden.exe`)
+
+Both guard tasks repeat on a timer while you are using the PC, so they must run
+without drawing anything on screen.
+
+`powershell.exe -WindowStyle Hidden` is **not** enough. Windows creates the
+console window first and PowerShell only hides it once it has started, so a
+console appears for a fraction of a second on every run. Measured directly by
+counting visible `ConsoleWindowClass` windows during a run:
+
+| Launch method | Visible console windows |
+|------|--------|
+| `powershell.exe -WindowStyle Hidden` | **1** (flashes) |
+| `SmRunHidden.exe powershell.exe …` | **0** |
+
+Task Scheduler can only suppress the console by running the task in session 0
+("run whether user is logged on or not"), which is not an option here:
+`Restart-ExplorerSafe` must relaunch Explorer into the interactive session.
+
+`tools\_SmRunHidden.cs` is therefore compiled with `/target:winexe`, putting it
+in the **GUI subsystem** so no console is ever allocated for it, and it starts
+the real command with `CREATE_NO_WINDOW`. The child's exit code is passed
+through, so Task Scheduler still reports success or failure correctly.
+
+`scripts\System_HiddenLauncherCore.ps1` exposes `Resolve-HiddenLauncher`, which
+builds the exe on first use with the `csc.exe` that ships with .NET Framework 4
+(always present on Windows 10/11) and rebuilds it whenever the `.cs` file is
+newer. Both installers call it, so a fresh `SETUP_NEW_PC.bat` needs no extra
+steps and no external toolchain.
 
 ---
 
@@ -977,6 +1024,201 @@ Explorer's command bar, but Windows does not provide a supported extension
 point there. Microsoft's `IExplorerCommand` API extends context menus instead.
 The toolkit therefore uses the safe image-file right-click verb and does not
 inject code into `explorer.exe`.
+
+### July 2026 — Personalization pages fixed + wallpaper backup prune
+
+**Symptom.** Settings → Personalization → **Background** and **Lock screen** would
+not open; clicking them did nothing.
+
+**Root cause.** `SystemSettings.exe` was crashing (`Application Error`, faulting
+module `Windows.UI.Xaml.dll`, exception `0xc000027b` — a stowed XAML exception).
+A Windows build update (`10.0.26100.8737` → `.8972`) changed the XAML tree that the
+Windhawk **Windows 11 Settings Styler** mod (`windows-11-settings-styler`, v1.0.1)
+hooks. Only those two preview pages crash; every other Settings page works. The
+crash is in the mod's core injection, not in its style rules — verified by
+stripping the entire mod config (all `controlStyles`, `themeResourceVariables`, and
+`styleConstants`) and reproducing the crash. v1.0.1 is already the latest release,
+so there is no config change or update that lets the mod coexist with these pages
+right now.
+
+**Fix.** The styler mod is left **disabled** (its full config is preserved so it
+can be re-enabled once the author ships a build-compatible update). With it off,
+both pages open normally. The trade-off is the stock Settings look instead of the
+custom narrow icon-rail / acrylic theme.
+
+**Lock screen persistence.** The lock screen is driven by the custom
+`local@lock-screen-wallpaper` Windhawk mod, which re-applies the image at boot
+(inside `LogonUI.exe`), on unlock, and on a timer via the Creative registry keys —
+persistence does **not** depend on Windows policy. A stale forced policy at
+`HKLM\SOFTWARE\Policies\Microsoft\Windows\Personalization\LockScreenImage` pointed
+at a missing `C:\Windows\Web\Screen\wall.jpg` (risking the default-blue lock screen
+and a "managed by your organization" state); it was backed up and removed. The mod
+does not re-add it because the staged image exists.
+
+**Wallpaper backup prune.** That mod stages a fresh timestamped copy
+(`lockscreen_YYYYMMDD_HHMMSS.jpg`) into `C:\ProgramData\WindhawkLockScreen` on every
+boot/unlock/sign-in and never deletes the old ones — they had reached **285 files /
+1.55 GB**, all byte-identical to the active `lockscreen.jpg`. Those were deleted,
+and `scripts\System_LockScreenPrune.ps1` now keeps only the active image plus the
+single newest copy (and trims the Windows theme wallpaper cache the same way). It
+never touches your original picture files.
+
+`scripts\Install_LockScreenPruneGuard.ps1` registers
+`\SystemMaintenance\LockScreenBackupPrune` (runs at logon and every hour):
+
+```powershell
+# install / re-register
+powershell -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\scripts\Install_LockScreenPruneGuard.ps1
+# remove
+powershell -ExecutionPolicy Bypass -File D:\Projects\tools\SystemMaintenance\scripts\Install_LockScreenPruneGuard.ps1 -Remove
+```
+
+To re-enable the Settings look later (only after a mod update): set `Disabled=0`
+under `HKLM\SOFTWARE\Windhawk\Engine\Mods\windows-11-settings-styler`, or toggle it
+in the Windhawk UI.
+
+### July 2026 — Flashing PowerShell window every ~25 seconds (Intel SUR)
+
+**Symptom.** A PowerShell console window flashed open and closed repeatedly a short
+while after every boot or restart, in bursts, then again after 30–60 seconds.
+
+**Root cause.** Not a scheduled task and not this toolkit. A process monitor showed
+Intel's `esrv_svc` spawning a `powershell.exe` (each with its own `conhost.exe` — the
+visible window) exactly every 25 seconds:
+
+```
+12:05:10  parent=esrv_svc  powershell.exe
+12:05:35  parent=esrv_svc  powershell.exe
+12:06:00  parent=esrv_svc  powershell.exe
+12:06:25  parent=esrv_svc  powershell.exe
+```
+
+That is **Intel SUR (System Usage Report)** — Intel's telemetry stack, installed
+under `C:\Program Files\Intel\SUR\QUEENCREEK`. It is not required by the Intel
+graphics/chipset drivers, the CPU, or power management; it only reports usage data
+to Intel. No `\SystemMaintenance\` task repeated faster than 20 minutes, so nothing
+in this toolkit could account for a 25-second cycle. (The toolkit's own tasks *did*
+flash on their slower schedule — `-WindowStyle Hidden` does not prevent it. Fixed
+separately below.)
+
+**Fix.** Three services were stopped and set to **Disabled** (prior state saved to
+`assets\intel_sur_services_before.txt`):
+
+| Service | Display name |
+| --- | --- |
+| `ESRV_SVC_QUEENCREEK` | Energy Server Service queencreek |
+| `SystemUsageReportSvc_QUEENCREEK` | Intel(R) System Usage Report Service |
+| `USER_ESRV_SVC_QUEENCREEK` | User Energy Server Service queencreek |
+
+Verified over a 150-second monitor afterwards: zero `esrv_svc` spawns. Disabling
+telemetry slightly reduces background load rather than affecting performance.
+
+To revert (restores Intel telemetry and the flashing window):
+
+```powershell
+Set-Service ESRV_SVC_QUEENCREEK -StartupType Automatic
+Set-Service SystemUsageReportSvc_QUEENCREEK -StartupType Automatic
+Start-Service SystemUsageReportSvc_QUEENCREEK, ESRV_SVC_QUEENCREEK
+```
+
+**Related repair.** The `local@lock-screen-wallpaper` mod was configured to use
+`C:\Users\nisha\Downloads\beast-of-reincarnation-vo.jpg`, which had been deleted. Its
+fallback resolved to the staged image itself, so every 15-second apply cycle failed
+on a copy-onto-itself and the mod could no longer restore the lock screen if Windows
+reset it. The applied image was copied to a stable location,
+`C:\Users\nisha\Pictures\LockScreen\lockscreen.jpg` (byte-identical, so the lock
+screen looks unchanged), and the mod now points there. Keep that file in place.
+
+### August 2026 — Settings-safe updates for ALL apps
+
+Rule: System Maintenance **updates** apps; it must **not erase** their settings/data.
+
+| Layer | Policy |
+| --- | --- |
+| Winget | `upgrade` only. `--force`, `--uninstall-previous`, and purge flags are **blocked** by `Assert-SettingsSafePackageArgs`. Bulk tokens always start with `upgrade`. |
+| Chocolatey | `choco upgrade` only — never `--force`, never uninstall in the update path. |
+| Cleanup | May only clear Temp / Prefetch / `D:\Cache` (+ allowlisted project caches). `Clear-MaintenanceFolderContents` refuses any other root (AppData, Program Files, etc.). |
+| Logi Options+ | Extra backup/restore around updates (mouse profiles are brittle); same “update OK, settings stay” rule as every other app. |
+
+Exception: machine-scope **PowerShell** MSI technology-mismatch repair may uninstall that one stale MSI, then install the current PowerShell — not a general-app path.
+
+### August 2026 — Logi Options+ mouse settings protected
+
+**Symptom.** Saved Logitech mouse button / Options+ settings sometimes reset.
+
+**Analysis.** Quick Clean / Free Disk Space / Full Maintenance cleanup only touch
+`%TEMP%`, Windows Prefetch, and `D:\Cache`. They never delete
+`%LocalAppData%\LogiOptionsPlus\settings.db` (your mouse profiles live there since
+May 2024). No System Maintenance script referenced Logi/Logitech.
+
+The realistic risk path was **Update All Apps** upgrading `Logitech.OptionsPlus`
+via winget — installers can replace app files and occasionally empty the profile
+DB. Separately, Windows Installer often “reconfigures” **Logi Plugin Service** on
+its own (seen many times in Event Log); that is Logitech’s updater, not this toolkit.
+
+**Fix (per user: app updates OK, settings must not be deleted).**
+
+| Change | Detail |
+| --- | --- |
+| `System_LogiOptionsProtect.ps1` | Snapshot settings/macros/Flow before updates; restore if `settings.db` missing/emptied; keep last 10 backups |
+| Protected paths | `LogiOptionsPlus` Local/Roaming + `ProgramData\Logishrd\LogiOptionsPlus` + backup folder |
+| Wired into | **Update All Apps**, Full Maintenance user step |
+
+Baseline backup taken on this PC:
+`%LocalAppData%\SystemMaintenance\Backups\LogiOptionsPlus\`.
+
+### August 2026 — AWCC Welcome wizard every open (inverted OnBoardScreen)
+
+**Symptom.** Dark **Welcome!** card on every close/open of `AWCC.exe` (and after reboot if AWCC reopens).
+
+**Root cause.** `UserSetting.json` → `OnBoardScreen`. UIA A/B on this PC proved the polarity is the opposite of the property name:
+
+- `"True"` → Welcome **not** shown  
+- `"False"` → Welcome **is** shown  
+
+`System_AwccOverlayGuard.ps1` (used by Fix Slow Explorer) previously wrote `"False"` to “complete” onboarding, which forced Welcome every launch. That is how System Maintenance was involved.
+
+**Fix.** Restored `OnBoardScreen` to `"True"`, corrected the guard to write `"True"`, verified close→reopen with UIA: `Welcome visible: False` both times. Per-area `ReadyToLaunch` tours remain marked `Completed`.
+
+### July 2026 — Toolkit's own tasks no longer flash a console
+
+**Symptom.** After the Intel SUR fix a console still flashed, but far less often —
+minutes apart instead of every 25 seconds.
+
+**Root cause.** This toolkit, not Intel. `\SystemMaintenance\LockScreenBackupPrune`
+repeated **every 20 minutes**, and the flash timestamps matched its run times
+exactly. A full scan confirmed it was the only sub-hourly console task on the
+machine.
+
+The earlier assumption that `-WindowStyle Hidden` prevented this was wrong. Windows
+creates the console window before PowerShell can hide it, so a window is drawn for
+an instant on every run. An A/B measurement counting visible `ConsoleWindowClass`
+windows during an identical payload:
+
+| Launch method | Visible console windows |
+| --- | --- |
+| `powershell.exe -WindowStyle Hidden` | **1** |
+| `SmRunHidden.exe powershell.exe …` | **0** |
+
+**Fix.** Added `tools\_SmRunHidden.cs` → `tools\SmRunHidden.exe`, a GUI-subsystem
+launcher that starts the real command with `CREATE_NO_WINDOW` and passes the exit
+code through (§11.14). Both installers now register their task through it, and
+`scripts\System_HiddenLauncherCore.ps1` builds it automatically on first use.
+
+Session 0 ("run whether user is logged on or not") would also have hidden the
+window, but was rejected: `Restart-ExplorerSafe` must relaunch Explorer into the
+interactive session.
+
+| Task | Before | After |
+| --- | --- | --- |
+| `LockScreenBackupPrune` | every 20 min, flashed | every **60 min**, invisible |
+| `HideNvidiaDesktopMenu` | every 6 h, flashed | every 6 h, invisible |
+
+The prune interval was relaxed to hourly because backups are only created on boot,
+unlock and sign-in, so a 20-minute cycle was needless wakeups. Both tasks were
+triggered manually afterwards and observed with a 15 ms poll: zero visible windows,
+`LastTaskResult = 0x0`, and the prune still left only the active image plus one
+backup.
 
 ### July 2026 — NVIDIA menu icon no longer replaced by a theme glyph
 

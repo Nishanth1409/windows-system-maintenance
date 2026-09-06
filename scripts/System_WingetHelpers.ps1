@@ -191,6 +191,32 @@ function Get-UpgradeScanSnapshot {
     return Import-Clixml $Path
 }
 
+function Assert-SettingsSafePackageArgs {
+    param(
+        [string[]]$Tokens,
+        [switch]$AllowUninstall
+    )
+
+    # Policy: update apps in place only. Never pass flags that wipe user data /
+    # extensions / AppData. Applies to every package, not just Logi Options+.
+    $joined = @($Tokens | ForEach-Object { "$_".ToLowerInvariant() })
+    $banned = @(
+        '--force',
+        '--uninstall-previous',
+        '--purge',
+        '--removedependencies',
+        '--remove-dependencies'
+    )
+    foreach ($flag in $banned) {
+        if ($joined -contains $flag) {
+            throw "Blocked unsafe package arg '$flag' (settings-safe upgrade policy)."
+        }
+    }
+    if (-not $AllowUninstall -and ($joined -contains 'uninstall')) {
+        throw "Blocked 'uninstall' in upgrade path (settings-safe upgrade policy)."
+    }
+}
+
 function Get-WingetUpgradeArgTokens {
     param(
         [ValidateSet('machine', 'user')]
@@ -198,8 +224,10 @@ function Get-WingetUpgradeArgTokens {
         [string]$Source = ''
     )
 
-    # In-place upgrade only — no --force or --uninstall-previous (those wipe apps like Chrome).
+    # In-place upgrade only — never --force / --uninstall-previous (those wipe
+    # settings for Chrome, Logi Options+, browsers, etc.).
     $tokens = @(
+        'upgrade',
         '--all',
         '--include-unknown',
         '--include-pinned',
@@ -212,6 +240,7 @@ function Get-WingetUpgradeArgTokens {
     if ($Source) {
         $tokens += @('--source', $Source)
     }
+    Assert-SettingsSafePackageArgs -Tokens $tokens
     return $tokens
 }
 
@@ -265,6 +294,7 @@ function Get-WingetPerPackageArgTokens {
     if ($Package.Source) {
         $tokens += @('--source', $Package.Source)
     }
+    Assert-SettingsSafePackageArgs -Tokens $tokens
     return $tokens
 }
 
@@ -274,7 +304,8 @@ function Get-WingetUninstallArgTokens {
         $Package
     )
 
-    return @(
+    # Only used by the PowerShell machine MSI repair path — never for normal apps.
+    $tokens = @(
         'uninstall',
         '--exact',
         '--name', $Package.Name,
@@ -282,6 +313,8 @@ function Get-WingetUninstallArgTokens {
         '--disable-interactivity',
         '-h'
     )
+    Assert-SettingsSafePackageArgs -Tokens $tokens -AllowUninstall
+    return $tokens
 }
 
 function Repair-WingetPackagesBeforeUpgrade {
@@ -422,7 +455,8 @@ function New-WingetUpgradeBatch {
     $lines.Add('echo  ========================================') | Out-Null
     $lines.Add('echo  Sources: winget + Microsoft Store + fonts') | Out-Null
     $lines.Add('echo  Nilesoft Shell: skipped (not updated, not touched)') | Out-Null
-    $lines.Add('echo  Mode: in-place upgrade only (keeps extensions, shortcuts, settings)') | Out-Null
+    $lines.Add('echo  Mode: in-place UPGRADE only for ALL apps') | Out-Null
+    $lines.Add('echo  Settings/AppData: NEVER deleted (--force / --uninstall-previous banned)') | Out-Null
     $lines.Add(('echo Log: {0}' -f $LogFile)) | Out-Null
     $lines.Add('echo.') | Out-Null
     $lines.Add(('echo === {0} ===' -f $Title) + (' >> "' + $LogFile + '"')) | Out-Null
@@ -556,6 +590,7 @@ function New-ChocoUpgradeBatch {
     $lines.Add('echo  ========================================') | Out-Null
     $lines.Add('echo   Chocolatey - Update ALL Packages') | Out-Null
     $lines.Add('echo  ========================================') | Out-Null
+    $lines.Add('echo  Mode: upgrade only (no --force / no uninstall / settings kept)') | Out-Null
     $lines.Add(('echo Log: {0}' -f $LogFile)) | Out-Null
     $lines.Add('echo.') | Out-Null
 
@@ -564,7 +599,8 @@ function New-ChocoUpgradeBatch {
     $lines.Add('choco outdated' + $logAppend + ' 2>&1') | Out-Null
     $lines.Add('echo.') | Out-Null
     $lines.Add('echo [Step 1] Upgrade ALL except nilesoft-shell (Nilesoft not touched)...') | Out-Null
-    $lines.Add('choco upgrade all -y --exclude="nilesoft-shell"' + $logAppend + ' 2>&1') | Out-Null
+    # Never pass --force / --force-dependencies / uninstall — those can wipe package data.
+    $lines.Add('choco upgrade all -y --exclude="nilesoft-shell" --no-progress' + $logAppend + ' 2>&1') | Out-Null
 
     if ($Packages.Count -gt 0) {
         $lines.Add('echo.') | Out-Null
@@ -574,7 +610,7 @@ function New-ChocoUpgradeBatch {
             $i++
             $safeName = $pkg.Name -replace '"', "'"
             $lines.Add(('echo [{0}/{1}] {2} ({3} -^> {4})' -f $i, $Packages.Count, $safeName, $pkg.Version, $pkg.Available)) | Out-Null
-            $lines.Add(('choco upgrade {0} -y' -f $pkg.Name) + $logAppend + ' 2>&1') | Out-Null
+            $lines.Add(('choco upgrade {0} -y --no-progress' -f $pkg.Name) + $logAppend + ' 2>&1') | Out-Null
         }
     }
 
@@ -606,7 +642,7 @@ function Start-ChocoUpgradeSession {
     $wantElevation = -not (Test-IsAdministrator)
 
     if ($Silent) {
-        $cmdLine = "choco upgrade all -y --exclude=`"nilesoft-shell`" >> `"$logFile`" 2>&1"
+        $cmdLine = "choco upgrade all -y --exclude=`"nilesoft-shell`" --no-progress >> `"$logFile`" 2>&1"
         $startParams = @{
             FilePath     = 'cmd.exe'
             ArgumentList = '/c', $cmdLine

@@ -1,7 +1,8 @@
 # Paths and settings maintenance must never change (clipboard history,
-# File Explorer view/sort/group profile, etc.)
+# File Explorer view/sort/group profile, Logi Options+ mouse settings, etc.)
 
 . (Join-Path $PSScriptRoot 'System_ExplorerViewProfile.ps1')
+. (Join-Path $PSScriptRoot 'System_LogiOptionsProtect.ps1')
 
 function Get-ProtectedMaintenancePaths {
     return @(
@@ -11,7 +12,13 @@ function Get-ProtectedMaintenancePaths {
         (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Explorer'),
         (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\UsrClass.dat'),
         (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\UsrClass.dat.LOG1'),
-        (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\UsrClass.dat.LOG2')
+        (Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\UsrClass.dat.LOG2'),
+        # Logitech Options+ mouse/keyboard profiles (settings.db, macros, Flow).
+        # Cleanup does not target these; listed so they can never be wiped later.
+        (Join-Path $env:LOCALAPPDATA 'LogiOptionsPlus'),
+        (Join-Path $env:APPDATA 'LogiOptionsPlus'),
+        (Join-Path $env:ProgramData 'Logishrd\LogiOptionsPlus'),
+        (Join-Path $env:LOCALAPPDATA 'SystemMaintenance\Backups\LogiOptionsPlus')
     )
 }
 
@@ -38,6 +45,35 @@ function Test-ProtectedMaintenancePath {
     return $false
 }
 
+function Test-IsMaintenanceCleanAllowlistedPath {
+    param([string]$Path)
+
+    if (-not $Path) { return $false }
+    try {
+        $normalized = [System.IO.Path]::GetFullPath($Path).TrimEnd('\')
+    } catch {
+        return $false
+    }
+
+    $allowedRoots = [System.Collections.Generic.List[string]]::new()
+    foreach ($folder in (Get-MaintenanceTempFolders)) { $allowedRoots.Add($folder) }
+    $allowedRoots.Add([System.IO.Path]::GetFullPath("$env:WINDIR\Prefetch").TrimEnd('\'))
+    $allowedRoots.Add('D:\Cache')
+    $allowedRoots.Add('D:\.pnpm-store')
+
+    foreach ($root in $allowedRoots) {
+        try {
+            $r = [System.IO.Path]::GetFullPath($root).TrimEnd('\')
+        } catch {
+            continue
+        }
+        if ($normalized -eq $r -or $normalized.StartsWith($r + '\', [StringComparison]::OrdinalIgnoreCase)) {
+            return $true
+        }
+    }
+    return $false
+}
+
 function Clear-MaintenanceFolderContents {
     param(
         [string]$Folder,
@@ -47,6 +83,9 @@ function Clear-MaintenanceFolderContents {
 
     if (-not $Folder) { return }
     if (Test-ProtectedMaintenancePath $Folder) { return }
+    # Hard policy: only temp / prefetch / D:\Cache (and pnpm store) may be
+    # cleared. App settings under AppData / Program Files are never erased.
+    if (-not (Test-IsMaintenanceCleanAllowlistedPath $Folder)) { return }
     if (-not (Test-Path $Folder)) { return }
 
     Get-ChildItem $Folder -Force -ErrorAction SilentlyContinue | ForEach-Object {

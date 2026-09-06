@@ -7,8 +7,15 @@ $null = Enable-ClipboardHistory
 
 Write-Host "=== USER MAINTENANCE ===" -ForegroundColor Cyan
 
+Write-Host "=== LOGI OPTIONS+ SETTINGS BACKUP ===" -ForegroundColor Cyan
+$logiBackup = Backup-LogiOptionsSettings -Reason 'pre-full-maintenance-user'
+Write-Host ("  {0}" -f $logiBackup.Note)
+
 Write-Host "=== USER APP UPDATES ===" -ForegroundColor Cyan
 & "$PSScriptRoot\System_WingetUser.ps1" -Silent | Out-Null
+
+$logiRepair = Repair-LogiOptionsSettingsAfterUpdate
+Write-Host ("  {0}" -f $logiRepair.Note)
 
 Write-Host "=== USER TEMP CLEANUP ===" -ForegroundColor Cyan
 & "$PSScriptRoot\System_QuickClean.ps1" -Silent 2>$null
@@ -28,6 +35,6 @@ $messageIcon = if ($spotifySpicetify.ExitCode -eq 0) { 'Information' } else { 'W
 Write-Host "=== USER TASKS COMPLETED ===" -ForegroundColor Green
 
 [System.Windows.Forms.MessageBox]::Show(
-    "User maintenance finished.`n`n  - Cleanup (Windows temp, prefetch, D:\Cache, recycle bin)`n  - User-scope app updates (winget)`n  - Spotify + Spicetify processed last`n  - Personal data on D: was not touched`n`n$spotifySpicetifySummary",
+    "User maintenance finished.`n`n  - Cleanup (Windows temp, prefetch, D:\Cache, recycle bin)`n  - User-scope app updates (winget)`n  - Logi Options+ mouse settings backed up (restored if an update wiped them)`n  - Spotify + Spicetify processed last`n  - Personal data on D: was not touched`n`n$spotifySpicetifySummary",
     'System Maintenance', 'OK', $messageIcon
 ) | Out-Null
