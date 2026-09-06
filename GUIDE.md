@@ -1349,9 +1349,11 @@ Add any of these in the App Group app, then run `tools\_SyncFromLiveAppGroup.ps1
 **Live data:** `C:\ProgramData\Windhawk` (ModsSource + `HKLM\SOFTWARE\Windhawk\Engine\Mods`)  
 **Docs / mods repo:** [windhawk-mods](https://github.com/Nishanth1409/windhawk-mods) → `analysis\` (curated mod sources).
 
-Full inventory: see that repo’s `README.md`. Windhawk sources are **not** stored inside System Maintenance.
+Full inventory: see that repo’s `README.md`. Windhawk sources / repair helpers are **not** stored inside System Maintenance (one-off Aug 2026 taskbar repair scripts were removed from this folder on purpose).
 
-**Layout:** one folder per installed mod under `windhawk\analysis\<mod-id>\` with current source (`.cpp` / `.wh.cpp`), settings JSON, and matching `.bak`. Examples: Tray Audio Output, Mic Tray Switch, Custom Menu Height, Taskbar Auto-Hide Peek, Lock Screen / Per-Monitor Wallpaper, stylers (Explorer / Start / Settings / Taskbar / Notification Center).
+**Layout:** one folder per curated mod under that repo’s `analysis\<mod-id>\` (source, settings JSON, `.bak`). Matter taskbar Styler JSON: `analysis\taskbar-styler-matter\`.
+
+**In this toolkit only:** `scripts\Apply_StartButton_Matter.ps1` + `icons\Start.png` for the custom Start button. After a Windows taskbar update, re-run that script (and re-import the Matter JSON from windhawk-mods if the theme itself reset).
 
 System Maintenance **does not** auto-update or reset Windhawk mods. Use **Fix Slow Explorer** after enabling Explorer mods.
 
