@@ -5,7 +5,7 @@
 **(Chrome extensions and Windhawk are separate GitHub projects — not stored in this folder.)**  
 **Menu:** Desktop right-click → **Show more options** (Windows 11) → **System Maintenance**  
 **Install menu:** `Install_Menu.bat`  
-**Last updated:** 6 September 2026 (OEM auto-detect + setup loop fix)
+**Last updated:** 6 September 2026 (OEM adapt all PCs + Nilesoft menu icon pins)
 
 ---
 
@@ -60,10 +60,10 @@ D:\Projects\tools\SystemMaintenance\Install_Menu.bat
 | 4 | New ▶ | Windows | Built-in |
 | 5 | Display | `display.dll` | Built-in |
 | 6 | Personalize | `themecpl.dll` | Built-in |
-| 7 | Installed Apps | `imageres.dll,-123` | Custom |
-| 8 | NVIDIA ▶ | `icons\nvidia_app.ico` | Custom |
-| 9 | System Maintenance ▶ | `imageres.dll,-140` | Custom |
-| 10 | Power ▶ | `imageres.dll,-109` | Custom |
+| 7 | Installed Apps | `icons\menu_apps.ico` | Custom |
+| 8 | NVIDIA ▶ | `icons\nvidia_app.ico` | Custom (NVIDIA GPU only) |
+| 9 | System Maintenance ▶ | `icons\menu_maintenance.ico` | Custom |
+| 10 | Power ▶ | `icons\menu_power.ico` | Custom |
 
 ```
 ┌─────────────────────────────┐
@@ -92,9 +92,9 @@ D:\Projects\tools\SystemMaintenance\Install_Menu.bat
 
 | # | Item | Icon | Action |
 |---|------|------|--------|
-| 1 | Restart | `shell32.dll,238` | Restart PC |
-| 2 | Sleep | `imageres.dll,-101` | Sleep mode |
-| 3 | Shut down | `shell32.dll,27` | Shut down PC |
+| 1 | Restart | `icons\menu_restart.ico` | Restart PC |
+| 2 | Sleep | `icons\menu_sleep.ico` | Sleep mode |
+| 3 | Shut down | `icons\menu_shutdown.ico` | Shut down PC |
 
 ### 2.4 Hidden / removed items
 
@@ -492,8 +492,9 @@ D:\Projects\tools\SystemMaintenance\
 | `SETUP_NEW_PC.bat` | One-click install on another PC (copy → `Install_Menu.bat` → OEM guards) |
 | `Add_Desktop_Menu.reg` | Registry source for context menu |
 | `tools\_FinalCheck.ps1` | Full health check (`_ValidateScripts` + `_AuditMenu`) |
-| `scripts\System_OemProfile.ps1` | Detect manufacturer / family; gate NVIDIA + AWCC steps |
+| `scripts\System_OemProfile.ps1` | Detect manufacturer / family / GPU / OEM care apps on any Windows PC |
 | `scripts\System_ApplyOemGuards.ps1` | Apply only NVIDIA / AWCC guards that match this PC |
+| `scripts\Extract_DesktopMenuIcons.ps1` | Build `icons\menu_*.ico` for Nilesoft + registry (same path as NVIDIA) |
 | `scripts\Show_SetupComplete.ps1` | Setup finished MessageBox (safe newlines) |
 | `scripts\System_MaintenanceProtect.ps1` | Clipboard protection + shared temp/prefetch cleanup |
 | `scripts\System_HideNvidiaDesktopMenu.ps1` | Remove duplicate NVIDIA desktop context menu entries |
@@ -620,24 +621,32 @@ entries are never touched.
 menu itself, and it replaces the icon of any item whose title matches one of its
 built-in glyphs. The glyph is filled with the current theme colours, so our
 `NVIDIA` parent item was drawn white/blue instead of NVIDIA green even though
-the registry pointed at `icons\nvidia_app.ico`. The submenu entries were
-unaffected because their titles do not match a glyph name.
+the registry pointed at `icons\nvidia_app.ico`.
 
-`Install_Menu.bat` therefore installs a single override:
+`Install_Menu.bat` therefore extracts multi-size `.ico` files (same
+`PrivateExtractIcons` path as NVIDIA) and installs Nilesoft `modify(...)` pins
+for **every custom desktop item** we own:
+
+| Title | Icon file |
+|-------|-----------|
+| Installed Apps | `icons\menu_apps.ico` |
+| NVIDIA | `icons\nvidia_app.ico` |
+| NVIDIA App / Control Panel | matching `nvidia_*.ico` |
+| System Maintenance | `icons\menu_maintenance.ico` |
+| Power / Restart / Sleep / Shut down | `icons\menu_power.ico` (+ restart/sleep/shutdown) |
 
 | File | Written by | Purpose |
 |------|-----------|---------|
-| `imports\systemmaintenance.nss` | `scripts\Install_NilesoftMenuIcons.ps1` | `modify(...)` rule pinning the NVIDIA item to our `.ico` |
+| `imports\systemmaintenance.nss` | `scripts\Install_NilesoftMenuIcons.ps1` | `modify(...)` rules pinning each title to our `.ico` |
 | `shell.nss` | same script | One `import 'imports/systemmaintenance.nss'` line |
 
 The original `shell.nss` is copied to `shell.nss.sm-backup` before the first
-edit. The rule is scoped with `where=str.equals(this.name, 'NVIDIA')` so it
-matches the parent item only — `find` alone would also catch
-"NVIDIA Control Panel" and give it the wrong icon. The icon path is rewritten
-for wherever this toolkit lives, exactly like `Add_Desktop_Menu.reg`.
+edit. Rules use `window.is_desktop` and `where=str.equals(this.name, '...')` so
+they stay on our menu and do not recolour other folders’ Restart items. Paths
+are rewritten for wherever this toolkit lives, exactly like `Add_Desktop_Menu.reg`.
 
 A Nilesoft Shell update rewrites `shell.nss` and drops third-party lines. If the
-NVIDIA icon turns white/blue again, re-run `Install_Menu.bat` as admin. If
+NVIDIA (or other) icons look wrong again, re-run `Install_Menu.bat` as admin. If
 Nilesoft is not installed, the script does nothing and Explorer uses the
 registry icons directly.
 
@@ -650,7 +659,17 @@ registry icons directly.
 | 3 | Friend's PC | Open folder → double-click `SETUP_NEW_PC.bat` → Yes on UAC |
 | 4 | Your PC | Delete `PortablePackage\` — rebuild next time instead of letting it go stale |
 
-**OEM auto-detect.** Setup prints manufacturer / model / family (`Alienware`, `ASUS`, `Dell`, …) via `scripts\System_OemProfile.ps1`. NVIDIA duplicate hide runs only when an NVIDIA GPU is present. AWCC Welcome/overlay guards run only on Alienware (or when AWCC is installed). ASUS TUF / MyASUS / Armoury Crate are left alone — no Alienware steps.
+**OEM auto-detect (any Windows PC).** Setup prints manufacturer / model / family
+via `scripts\System_OemProfile.ps1` — Alienware, Dell, ASUS, Lenovo, HP, MSI,
+Acer, Microsoft Surface, Samsung, Gigabyte, Razer, Framework, and Generic.
+Capabilities drive behaviour:
+
+| Capability | Behaviour |
+|------------|-----------|
+| NVIDIA GPU | NVIDIA submenu + duplicate-menu hide + guard task |
+| No NVIDIA | NVIDIA submenu omitted; leftover keys removed |
+| Alienware / AWCC installed | AWCC Welcome/overlay guards during Explorer restart |
+| Other OEM care apps | Detected and left alone (MyASUS, Vantage, HP Support, MSI Center, SupportAssist, …) |
 
 **“Open File - Security Warning” / Run Cancel loop.** If the package came from a ZIP, USB, or browser download, Windows marks `.bat` / `.ps1` as *from the Internet*. Clicking **Run** does **not** clear that mark. `Install_Menu.bat` / `SETUP_NEW_PC.bat` then re-launch themselves for Administrator approval, so Windows shows the **same** Run/Cancel dialog again — that is the “loop.”
 
@@ -988,7 +1007,10 @@ Brother’s ASUS TUF (not Alienware) hit a broken setup: CMD printed `tlocal` / 
 | `System_OemProfile.ps1` + `System_ApplyOemGuards.ps1` | Auto-detect Alienware / ASUS / Dell / …; skip AWCC on non-Alienware; NVIDIA hide only if GPU present |
 | `System_AwccOverlayGuard.ps1` early exit | No AWCC folder → run Explorer restart action unchanged |
 | `System_HideNvidiaDesktopMenu.ps1` | Extra handler names + Directory\Background + WOW6432Node roots after NVIDIA App updates |
-| GUIDE §11.7 | Document OEM adapt + both loop types (MOTW vs bat parse) |
+| `Extract_DesktopMenuIcons.ps1` + expanded `SystemMaintenance.nss` | Same Nilesoft pin pattern as NVIDIA for Installed Apps, System Maintenance, Power, Restart, Sleep, Shut down |
+| `Build_DesktopMenuReg.ps1` | Omits NVIDIA submenu when no NVIDIA GPU |
+| `System_OemProfile.ps1` | Broad OEM + GPU + care-app detection for any Windows laptop |
+| GUIDE §11.6 / §11.7 | Document full menu icon pins + OEM matrix |
 
 ### July 2026 — Duplicate file cleanup (single source of truth)
 

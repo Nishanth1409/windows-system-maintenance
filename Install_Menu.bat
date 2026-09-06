@@ -24,10 +24,11 @@ echo  [0/5] Detecting this PC...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_OemProfile.ps1" -Print
 echo.
 echo  [1/5] Refreshing icons...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Extract_DesktopMenuIcons.ps1"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Extract_NVIDIA_Icons.ps1"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Extract_FileExplorer_Icon.ps1"
 echo.
-echo  [2/5] Applying registry...
+echo  [2/5] Applying registry for this PC...
 set "GENREG=%TEMP%\SM_Add_Desktop_Menu.reg"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Build_DesktopMenuReg.ps1" -Root "%~dp0." -OutFile "%GENREG%"
 if errorlevel 1 (
@@ -43,16 +44,13 @@ if errorlevel 1 (
 )
 del "%GENREG%" >nul 2>&1
 echo.
-echo  [3/5] Hiding NVIDIA duplicate desktop menu entries...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_HideNvidiaDesktopMenu.ps1" -Silent -Elevated -NoExplorerRestart
+echo  [3/5] Brand-specific guards...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_ApplyOemGuards.ps1" -Root "%~dp0." -Silent
 echo.
 echo  [4/5] Keeping menu icons through Nilesoft Shell...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\Install_NilesoftMenuIcons.ps1" -Root "%~dp0." -RestartExplorer
 echo.
-echo  [5/5] Brand-specific guards...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\System_ApplyOemGuards.ps1" -Root "%~dp0." -Silent
-echo.
-echo  Done. Desktop menu installed. NVIDIA duplicates hidden — use NVIDIA submenu only.
+echo  Done. Desktop menu installed for this PC.
 echo  Right-click desktop - Show more options - System Maintenance
 echo.
 if /i not "%~1"=="-NoPause" pause

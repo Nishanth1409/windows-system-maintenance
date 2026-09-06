@@ -1,8 +1,8 @@
 # Nilesoft Shell draws the desktop context menu itself and replaces the icon of
 # some items with its own built-in glyphs, which ignores the Icon values this
 # toolkit writes to the registry. This installs shell\SystemMaintenance.nss into
-# the Shell config, with the icon paths rewritten for wherever this toolkit
-# lives, so the extracted icons survive.
+# the Shell config (NVIDIA + Installed Apps + System Maintenance + Power pins),
+# with icon paths rewritten for wherever this toolkit lives.
 #
 # Does nothing when Nilesoft Shell is absent: plain Explorer already honours the
 # registry icons.

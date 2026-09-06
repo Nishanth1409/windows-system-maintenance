@@ -13,8 +13,8 @@ Windows Registry Editor Version 5.00
 ;   9     System Maintenance ▶
 ;  10     Power ▶
 ;
-;  ICONS: imageres.dll = Windows 11 modern style
-;         icons\*.ico   = official NVIDIA logos
+;  ICONS: icons\menu_*.ico + nvidia_*.ico (extracted by Install_Menu;
+;         Nilesoft Shell pins the same files via shell\SystemMaintenance.nss)
 ; =============================================================================
 
 ; --- Cleanup legacy keys ---
@@ -49,7 +49,7 @@ Windows Registry Editor Version 5.00
 ; =============================================================================
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_01_Apps]
 "MUIVerb"="Installed Apps"
-"Icon"="%SystemRoot%\\System32\\imageres.dll,-123"
+"Icon"="C:\\SystemMaintenance\\icons\\menu_apps.ico"
 "Position"="Bottom"
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_01_Apps\command]
@@ -86,7 +86,7 @@ Windows Registry Editor Version 5.00
 ; =============================================================================
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Perz_03_SystemMaintenance]
 "MUIVerb"="System Maintenance"
-"Icon"="%SystemRoot%\\System32\\imageres.dll,-140"
+"Icon"="C:\\SystemMaintenance\\icons\\menu_maintenance.ico"
 "Position"="Bottom"
 "SubCommands"=""
 
@@ -204,7 +204,7 @@ Windows Registry Editor Version 5.00
 ; =============================================================================
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power]
 "MUIVerb"="Power"
-"Icon"="%SystemRoot%\\System32\\imageres.dll,-109"
+"Icon"="C:\\SystemMaintenance\\icons\\menu_power.ico"
 "Position"="Bottom"
 "SubCommands"=""
 
@@ -213,21 +213,21 @@ Windows Registry Editor Version 5.00
 ; Power icons = same as Windows desktop Restart / Sleep / Shut down defaults
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\01_Restart]
 @="Restart"
-"Icon"="%SystemRoot%\\System32\\shell32.dll,238"
+"Icon"="C:\\SystemMaintenance\\icons\\menu_restart.ico"
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\01_Restart\command]
 @="shutdown.exe /r /t 0"
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\02_Sleep]
 @="Sleep"
-"Icon"="%SystemRoot%\\System32\\imageres.dll,-101"
+"Icon"="C:\\SystemMaintenance\\icons\\menu_sleep.ico"
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\02_Sleep\command]
 @="rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\03_Shutdown]
 @="Shut down"
-"Icon"="%SystemRoot%\\System32\\shell32.dll,27"
+"Icon"="C:\\SystemMaintenance\\icons\\menu_shutdown.ico"
 
 [HKEY_CLASSES_ROOT\DesktopBackground\Shell\Pwrz_04_Power\shell\03_Shutdown\command]
 @="shutdown.exe /s /t 0"
