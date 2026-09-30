@@ -1131,6 +1131,22 @@ To re-enable the Settings look later (only after a mod update): set `Disabled=0`
 under `HKLM\SOFTWARE\Windhawk\Engine\Mods\windows-11-settings-styler`, or toggle it
 in the Windhawk UI.
 
+See September 2026 — Windows 11 26H2 for the current styler state.
+
+### September 2026 — Windows 11 26H2
+
+The laptop updated to Windows 11 26H2 on 30 September 2026 (`DisplayVersion` 26H2, build `10.0.26300.9550`). `explorer.exe` file version stayed on the 26100 line (`10.0.26100.8875`), which is normal for this enablement-style update.
+
+Checked after the update:
+- `tools\_ValidateScripts.ps1`, `tools\_AuditMenu.ps1`, and `tools\_FinalCheck.ps1` all passed. No script changes were required. Nothing in the toolkit keys off `24H2` / build 26100 in a way that rejects 26300.
+- Scheduled tasks `\SystemMaintenance\HideNvidiaDesktopMenu` and `\SystemMaintenance\LockScreenBackupPrune` last result 0.
+- Intel SUR services (`ESRV_SVC_QUEENCREEK`, `SystemUsageReportSvc_QUEENCREEK`, `USER_ESRV_SVC_QUEENCREEK`) stayed Disabled. The update did not turn them back on.
+- Windhawk is running. `windows-11-settings-styler` is **v1.1** and **enabled** (`HKLM\SOFTWARE\Windhawk\Engine\Mods\windows-11-settings-styler`, `Disabled=0`). The July 2026 note to leave v1.0.1 disabled is historical. No `SystemSettings.exe` Application Error (event 1000) in the 7 days before this check. One older `Explorer.EXE` crash on 26 September 2026 faulted in `Windows.UI.Xaml.dll` (`0xc000027b`) and was not repeated after this update.
+- Local mods still enabled: `local@translucent-windows`, `local@lock-screen-wallpaper`, `local@taskbar-always-visible-fullscreen`, `local@tray-audio-output`, `local@mic-tray-switch`. `local@per-monitor-wallpaper` remains disabled.
+- Taskbar mod version detection treats build >= 26100 as the Windows 11 taskbar.dll path. Build 26300 uses that same path. No enum change.
+
+If Personalization → Background or Lock screen stops opening again, disable `windows-11-settings-styler` (set `Disabled=1` or toggle it off in Windhawk). Do not re-enable it until those two pages open.
+
 ### July 2026 — Flashing PowerShell window every ~25 seconds (Intel SUR)
 
 **Symptom.** A PowerShell console window flashed open and closed repeatedly a short
