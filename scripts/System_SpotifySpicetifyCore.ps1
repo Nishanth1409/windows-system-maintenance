@@ -1,6 +1,5 @@
 # Shared Spotify + Spicetify helpers (user PowerShell only).
 $script:SpotifySetupUri = 'https://download.scdn.co/SpotifySetup.exe'
-$script:SpicetifyInstallUri = 'https://raw.githubusercontent.com/spicetify/cli/main/install.ps1'
 
 function Test-IsPowerShellHost {
     $proc = (Get-Process -Id $PID -ErrorAction SilentlyContinue).ProcessName
@@ -26,13 +25,36 @@ function Test-SpotifyDesktopInstalled {
     return Test-Path (Join-Path $env:APPDATA 'Spotify\Spotify.exe')
 }
 
-function Stop-SpotifyProcess {
-    Get-Process -Name 'Spotify' -ErrorAction SilentlyContinue | ForEach-Object {
-        try { $_.CloseMainWindow() | Out-Null } catch { }
+function Get-SpotifyProcesses {
+    Get-Process -ErrorAction SilentlyContinue | Where-Object {
+        $_.ProcessName -like 'Spotify*' -or
+        ($_.Path -and $_.Path -like '*\Spotify\*')
     }
-    Start-Sleep -Seconds 2
-    Get-Process -Name 'Spotify' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 1
+}
+
+function Stop-SpotifyProcess {
+    param([int]$WaitSeconds = 20)
+
+    # Official SpotifySetup.exe relaunches the app after /silent. Close the
+    # window first, then force-kill leftover helpers so Spicetify is never
+    # blocked on a y/yes "Spotify is still running" prompt.
+    for ($i = 0; $i -lt 3; $i++) {
+        Get-SpotifyProcesses | ForEach-Object {
+            try { $_.CloseMainWindow() | Out-Null } catch { }
+        }
+        Start-Sleep -Milliseconds 800
+        Get-SpotifyProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 500
+        if (-not (Get-SpotifyProcesses)) { break }
+    }
+
+    $deadline = (Get-Date).AddSeconds($WaitSeconds)
+    while ((Get-Date) -lt $deadline -and (Get-SpotifyProcesses)) {
+        Get-SpotifyProcesses | Stop-Process -Force -ErrorAction SilentlyContinue
+        Start-Sleep -Milliseconds 400
+    }
+
+    return -not [bool](Get-SpotifyProcesses)
 }
 
 function Install-OfficialSpotifyDesktop {
@@ -72,6 +94,16 @@ function Install-OfficialSpotifyDesktop {
         Remove-Item $installer -Force -ErrorAction SilentlyContinue
     }
 
+    # Installer detaches Spotify.exe after setup.exe exits.
+    Start-Sleep -Seconds 3
+    $closed = Stop-SpotifyProcess
+    if (-not $closed) {
+        return [PSCustomObject]@{
+            Status  = 'Failed'
+            Message = 'Spotify updated but would not close. Close Spotify, then run Update All Apps again.'
+        }
+    }
+
     if (-not (Test-SpotifyDesktopInstalled)) {
         return [PSCustomObject]@{
             Status  = 'Failed'
@@ -82,7 +114,7 @@ function Install-OfficialSpotifyDesktop {
     $label = if ($wasInstalled) { 'Updated' } else { 'Installed' }
     return [PSCustomObject]@{
         Status  = $label
-        Message = "Spotify desktop app from download.scdn.co ($label)."
+        Message = "Spotify desktop app from download.scdn.co ($label, closed after install)."
     }
 }
 
@@ -96,51 +128,108 @@ function Resolve-SpicetifyOnPath {
     return $false
 }
 
-function Get-PatchedSpicetifyInstallScript {
-    $content = (Invoke-WebRequest -Uri $script:SpicetifyInstallUri -UseBasicParsing).Content
-    # Hidden/menu PowerShell cannot answer prompts — auto-resume install and accept Marketplace (Yes).
-    $content = $content -replace '(?ms)\$choice = \$Host\.UI\.PromptForChoice\(\s*''''\s*,\s*''Do you want to abort the installation process\?''[^\)]+\)', '$choice = 1'
-    $content = $content -replace '(?ms)\$choice = \$Host\.UI\.PromptForChoice\(\s*''''\s*,\s*"`nDo you also want to install Spicetify Marketplace\?[^\)]+\)', '$choice = 0'
-    return $content
+function Get-SpicetifyArchTag {
+    switch ($env:PROCESSOR_ARCHITECTURE) {
+        'ARM64' { return 'arm64' }
+        'AMD64' { return 'x64' }
+        default { return 'x32' }
+    }
+}
+
+function Install-SpicetifyFromGithubZip {
+    param([switch]$Silent)
+
+    $folder = Join-Path $env:LOCALAPPDATA 'spicetify'
+    New-Item -ItemType Directory -Path $folder -Force | Out-Null
+
+    try {
+        if (-not $Silent) { Write-Host 'Fetching latest Spicetify CLI...' }
+        $headers = @{ 'User-Agent' = 'SystemMaintenance' }
+        $latest = Invoke-RestMethod -Uri 'https://api.github.com/repos/spicetify/cli/releases/latest' -Headers $headers
+        $version = [string]$latest.tag_name -replace '^v', ''
+        $arch = Get-SpicetifyArchTag
+        $zip = Join-Path $env:TEMP 'spicetify.zip'
+        $uri = "https://github.com/spicetify/cli/releases/download/v$version/spicetify-$version-windows-$arch.zip"
+        Invoke-WebRequest -Uri $uri -OutFile $zip -UseBasicParsing -Headers $headers
+        Expand-Archive -Path $zip -DestinationPath $folder -Force
+        Remove-Item $zip -Force -ErrorAction SilentlyContinue
+    } catch {
+        return [PSCustomObject]@{
+            Status  = 'Failed'
+            Message = "Spicetify download failed: $($_.Exception.Message)"
+        }
+    }
+
+    $exe = Join-Path $folder 'spicetify.exe'
+    if (-not (Test-Path $exe)) {
+        return [PSCustomObject]@{
+            Status  = 'Failed'
+            Message = 'Spicetify zip extracted but spicetify.exe was not found.'
+        }
+    }
+
+    $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+    if ($userPath -notlike "*$folder*") {
+        [Environment]::SetEnvironmentVariable('PATH', "$userPath;$folder", 'User')
+    }
+    if (($env:PATH -split ';') -notcontains $folder) {
+        $env:PATH = "$env:PATH;$folder"
+    }
+
+    return [PSCustomObject]@{
+        Status  = 'Installed'
+        Message = "Spicetify CLI v$version installed (no prompts)."
+    }
 }
 
 function Install-OfficialSpicetifyCli {
     param([switch]$Silent)
 
-    try {
-        if (-not $Silent) { Write-Host 'Installing/updating Spicetify CLI from GitHub (auto-yes to prompts)...' }
-        $installScript = Get-PatchedSpicetifyInstallScript
-        Invoke-Expression $installScript
-        Start-Sleep -Seconds 2
-    } catch {
+    # Never run the official install.ps1 unattended: it now PromptForChoice
+    # "already installed / fix your installation?" which waits for y/yes.
+    if (Resolve-SpicetifyOnPath) {
+        Stop-SpotifyProcess | Out-Null
+        $upd = Invoke-SpicetifyCommand -CommandArgs @('update')
+        if ($upd.ExitCode -ne 0 -and $upd.Output -notmatch '(?i)up-to-date|already') {
+            $fresh = Install-SpicetifyFromGithubZip -Silent:$Silent
+            if ($fresh.Status -eq 'Failed') { return $fresh }
+            return [PSCustomObject]@{
+                Status  = 'Installed'
+                Message = 'Spicetify CLI refreshed from GitHub zip (no prompts).'
+            }
+        }
         return [PSCustomObject]@{
-            Status  = 'Failed'
-            Message = "Spicetify install failed: $($_.Exception.Message)"
+            Status  = 'Installed'
+            Message = 'Spicetify CLI already present; update ran without prompts.'
         }
     }
 
-    if (-not (Resolve-SpicetifyOnPath)) {
-        return [PSCustomObject]@{
-            Status  = 'Failed'
-            Message = 'Spicetify install script finished but spicetify command was not found.'
-        }
-    }
-
-    return [PSCustomObject]@{
-        Status  = 'Installed'
-        Message = 'Spicetify CLI installed/updated via iwr | iex (prompts answered Yes).'
-    }
+    return Install-SpicetifyFromGithubZip -Silent:$Silent
 }
 
 function Invoke-SpicetifyCommand {
-    param([string[]]$CommandArgs)
+    param(
+        [string[]]$CommandArgs,
+        [switch]$AllowRestart
+    )
     if (-not (Resolve-SpicetifyOnPath)) {
         return [PSCustomObject]@{ ExitCode = 1; Output = 'spicetify not found' }
     }
-    # Pipe yes/y so CLI prompts never block hidden menu PowerShell.
-    $autoYes = ("y$([Environment]::NewLine)" * 12)
-    $output = $autoYes | & spicetify @CommandArgs 2>&1 | Out-String
+
+    Stop-SpotifyProcess | Out-Null
+
+    # -n / --no-restart: we close Spotify ourselves; do not let CLI relaunch it
+    # mid-flow (that is what left the app open and blocked the next step).
+    $flags = @('-n')
+    if ($AllowRestart) { $flags = @() }
+
+    # Pipe y/yes in case an older CLI still reads stdin. Host PromptForChoice
+    # is avoided by not using install.ps1.
+    $nl = [Environment]::NewLine
+    $autoYes = (('y' + $nl) * 8) + (('yes' + $nl) * 8)
+    $output = $autoYes | & spicetify @flags @CommandArgs 2>&1 | Out-String
     $code = if ($null -ne $LASTEXITCODE) { $LASTEXITCODE } else { 0 }
+    Stop-SpotifyProcess | Out-Null
     return [PSCustomObject]@{ ExitCode = $code; Output = $output }
 }
 
@@ -155,49 +244,38 @@ function Invoke-SpicetifyReapply {
     param([switch]$FreshSpotify)
 
     $steps = New-Object System.Collections.Generic.List[string]
+    Stop-SpotifyProcess | Out-Null
 
-    $upd = Invoke-SpicetifyCommand -CommandArgs @('update')
-    $steps.Add('spicetify update') | Out-Null
-    if (-not (Test-SpicetifyResultOk $upd)) {
-        $upd = Invoke-SpicetifyCommand -CommandArgs @('update')
-    }
-
+    # After a Spotify client update, docs say: close Spotify, then backup apply.
+    # restore first when the previous backup no longer matches this build.
     if ($FreshSpotify) {
-        $null = Invoke-SpicetifyCommand -CommandArgs @('restore', 'backup')
-        $steps.Add('restore backup (fresh Spotify)') | Out-Null
-        $null = Invoke-SpicetifyCommand -CommandArgs @('backup')
-        $steps.Add('backup (new Spotify build)') | Out-Null
+        $null = Invoke-SpicetifyCommand -CommandArgs @('restore')
+        $steps.Add('restore') | Out-Null
+        $apply = Invoke-SpicetifyCommand -CommandArgs @('backup', 'apply')
+        $steps.Add('backup apply') | Out-Null
+    } else {
+        $apply = Invoke-SpicetifyCommand -CommandArgs @('backup', 'apply')
+        $steps.Add('backup apply') | Out-Null
     }
-
-    $apply = Invoke-SpicetifyCommand -CommandArgs @('apply')
-    $steps.Add('apply') | Out-Null
 
     if (-not (Test-SpicetifyResultOk $apply)) {
         $null = Invoke-SpicetifyCommand -CommandArgs @('update')
-        $null = Invoke-SpicetifyCommand -CommandArgs @('restore', 'backup')
-        $null = Invoke-SpicetifyCommand -CommandArgs @('backup')
-        $apply = Invoke-SpicetifyCommand -CommandArgs @('apply')
-        $steps.Add('retry: update → restore → backup → apply') | Out-Null
+        $apply = Invoke-SpicetifyCommand -CommandArgs @('restore', 'backup', 'apply')
+        $steps.Add('retry: update then restore backup apply') | Out-Null
     }
+
+    Stop-SpotifyProcess | Out-Null
 
     if (Test-SpicetifyResultOk $apply) {
         return [PSCustomObject]@{
             Status  = 'Applied'
-            Message = ('Spicetify synced and applied (' + ($steps -join ' → ') + ').')
-        }
-    }
-
-    $fallback = Invoke-SpicetifyCommand -CommandArgs @('restore', 'backup', 'apply')
-    if (Test-SpicetifyResultOk $fallback) {
-        return [PSCustomObject]@{
-            Status  = 'Applied'
-            Message = 'Spicetify restored from backup and applied.'
+            Message = ('Spicetify synced (' + ($steps -join ' → ') + '). Spotify left closed — open it when ready.')
         }
     }
 
     $hint = 'Close Spotify, then in user PowerShell run:'
     if ($apply.Output -match 'version mismatch') {
-        $hint = 'Spotify may be newer than Spicetify supports. Run `spicetify update` again, or use an older Spotify build from download.scdn.co.'
+        $hint = 'Spotify may be newer than Spicetify supports. Wait for a Spicetify release, or run `spicetify update` then `spicetify backup apply`.'
     }
 
     return [PSCustomObject]@{
@@ -222,7 +300,7 @@ function Invoke-SpotifySpicetifyFullUpdate {
         }
     }
 
-    Stop-SpotifyProcess
+    Stop-SpotifyProcess | Out-Null
 
     $spotify = Install-OfficialSpotifyDesktop -Silent:$Silent
     $notes.Add("Spotify: $($spotify.Message)") | Out-Null
@@ -234,6 +312,8 @@ function Invoke-SpotifySpicetifyFullUpdate {
         }
     }
 
+    Stop-SpotifyProcess | Out-Null
+
     $spicetify = Install-OfficialSpicetifyCli -Silent:$Silent
     $notes.Add("Spicetify CLI: $($spicetify.Message)") | Out-Null
     if ($spicetify.Status -eq 'Failed') {
@@ -244,9 +324,13 @@ function Invoke-SpotifySpicetifyFullUpdate {
         }
     }
 
+    Stop-SpotifyProcess | Out-Null
+
     $apply = Invoke-SpicetifyReapply -FreshSpotify
     $notes.Add("Theme: $($apply.Message)") | Out-Null
     $exitCode = if ($apply.Status -eq 'Failed') { 1 } else { 0 }
+
+    Stop-SpotifyProcess | Out-Null
 
     return [PSCustomObject]@{
         Status   = if ($exitCode -eq 0) { 'Completed' } else { 'Failed' }

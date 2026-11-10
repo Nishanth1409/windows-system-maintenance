@@ -184,7 +184,7 @@ Monthly — Update All Apps
 
 **Winget:** scripts call `%LocalAppData%\Microsoft\WindowsApps\winget.exe` directly (works when the `winget` alias is broken).  
 **NVIDIA menu:** driver/app updates re-add duplicate Control Panel entries — hidden automatically after Update All Apps and `Install_Menu.bat`.  
-| **Update Spotify + Spicetify:** Spotify from scdn.co; Spicetify `iwr \| iex` (auto-Yes); then **`spicetify update` → `restore backup` → `backup` → `apply`** to fix version mismatch after Spotify updates.
+| **Update Spotify + Spicetify:** Spotify from scdn.co (silent, then force-close so the installer cannot leave Spotify open). Spicetify CLI is updated from GitHub zip / `spicetify update` with **no y/yes prompts** (the official `install.ps1` is not used unattended). Then **`restore` → `backup apply --no-restart`**. Open Spotify yourself when it finishes.
 
 ### 4.3 Full Maintenance flow
 
