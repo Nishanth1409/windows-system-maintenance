@@ -49,5 +49,16 @@ if ($oem.ApplyAwccGuards) {
     Write-Host '  AWCC guards: skipped on this PC'
 }
 
+# Custom File Explorer icon — Windows restores the yellow folder after reboot.
+$explorerIcon = Join-Path $PSScriptRoot 'Extract_FileExplorer_Icon.ps1'
+if (Test-Path -LiteralPath $explorerIcon) {
+    & $explorerIcon -Silent | Out-Null
+}
+$explorerGuard = Join-Path $PSScriptRoot 'Install_FileExplorerIconGuard.ps1'
+if (Test-Path -LiteralPath $explorerGuard) {
+    & $explorerGuard -TargetRoot $Root -Silent -Elevated | Out-Null
+}
+if (-not $Silent) { Write-Host '  File Explorer icon + logon guard: applied' }
+
 # Do not emit the OEM object when -Silent (powershell -File prints return values).
 if (-not $Silent) { $oem }

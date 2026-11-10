@@ -38,6 +38,7 @@ Get-ChildItem $scriptsDir -Filter 'System_*.ps1' | ForEach-Object {
     'Extract_DesktopMenuIcons.ps1',
     'Extract_FileExplorer_Icon.ps1',
     'Install_NvidiaMenuGuard.ps1',
+    'Install_FileExplorerIconGuard.ps1',
     'Build_DesktopMenuReg.ps1',
     'Install_NilesoftMenuIcons.ps1',
     'Show_SetupComplete.ps1'
@@ -69,6 +70,8 @@ Write-Host '=== Required files ==='
     'icons\file_explorer.ico',
     'icons\file_explorer_256.png',
     'scripts\Extract_DesktopMenuIcons.ps1',
+    'scripts\Extract_FileExplorer_Icon.ps1',
+    'scripts\Install_FileExplorerIconGuard.ps1',
     'scripts\System_SetLockScreen.ps1',
     'tools\_FinalCheck.ps1',
     'tools\_ValidateScripts.ps1',
@@ -228,6 +231,11 @@ $nvGuard = Get-ScheduledTask -TaskPath '\SystemMaintenance\' -TaskName 'HideNvid
 if (-not $nvGuard) { Write-Fail 'NVIDIA guard task missing' }
 elseif ($nvGuard.Principal.RunLevel -ne 'Highest') { Write-Fail 'NVIDIA guard not Highest' }
 else { Write-Pass 'NVIDIA guard task OK' }
+
+$feGuard = Get-ScheduledTask -TaskPath '\SystemMaintenance\' -TaskName 'ApplyFileExplorerIcon' -EA SilentlyContinue
+if (-not $feGuard) { Write-Fail 'File Explorer icon guard task missing' }
+elseif ($feGuard.Principal.RunLevel -ne 'Highest') { Write-Fail 'File Explorer icon guard not Highest' }
+else { Write-Pass 'File Explorer icon guard task OK' }
 
 Write-Host '=== Nilesoft icons ==='
 $nilesoftRoot = @($env:ProgramFiles, ${env:ProgramFiles(x86)}) |

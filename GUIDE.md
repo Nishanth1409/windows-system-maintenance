@@ -499,6 +499,8 @@ D:\Projects\tools\SystemMaintenance\
 | `scripts\System_MaintenanceProtect.ps1` | Clipboard protection + shared temp/prefetch cleanup |
 | `scripts\System_HideNvidiaDesktopMenu.ps1` | Remove duplicate NVIDIA desktop context menu entries |
 | `scripts\Install_NvidiaMenuGuard.ps1` | Register/remove the scheduled task that auto-runs the NVIDIA hide script |
+| `scripts\Extract_FileExplorer_Icon.ps1` | Apply custom File Explorer icon to shortcuts (Python optional) |
+| `scripts\Install_FileExplorerIconGuard.ps1` | Re-apply that icon at logon (Windows resets the inbox pin) |
 | `scripts\System_LockScreenPrune.ps1` | Delete disposable wallpaper backup copies, keeping the active image + newest |
 | `scripts\Install_LockScreenPruneGuard.ps1` | Register/remove the scheduled task that auto-runs the wallpaper prune |
 | `scripts\System_LogiOptionsProtect.ps1` | Backup/restore Logi Options+ mouse settings around app updates; paths protected from cleanup |

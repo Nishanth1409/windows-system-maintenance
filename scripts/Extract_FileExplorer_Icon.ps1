@@ -1,5 +1,11 @@
-# Build file_explorer.ico from icons\file_explorer.png (or file explorer.svg)
-# Applies icon to File Explorer shortcuts + refreshes Windows icon cache
+﻿# Build file_explorer.ico from icons\file_explorer.png (or file explorer.svg)
+# Applies the custom icon to File Explorer shortcuts. Do not give the pin a
+# separate AppUserModelID — that made Explorer open as a second app (This PC
+# window next to the pin). Keep the inbox identity so it groups as File Explorer.
+param(
+    [switch]$RestartExplorer,
+    [switch]$Silent
+)
 $ErrorActionPreference = 'Stop'
 
 $iconsDir = Join-Path (Split-Path $PSScriptRoot -Parent) 'icons'
@@ -67,6 +73,80 @@ if ($canBuild) {
 
 if (-not (Test-Path -LiteralPath $icoPath)) { throw "ICO not created: $icoPath" }
 
+# Stable copy: D: may not be ready at logon, so shortcuts point here.
+$stableDir = Join-Path $env:LOCALAPPDATA 'SystemMaintenance'
+$stableIco = Join-Path $stableDir 'file_explorer.ico'
+New-Item -ItemType Directory -Force -Path $stableDir | Out-Null
+Copy-Item -LiteralPath $icoPath -Destination $stableIco -Force
+$iconForShortcuts = $stableIco
+
+# Inbox File Explorer identity — same grouping as This PC / folder windows
+$explorerAppId = 'Microsoft.Windows.Explorer'
+
+if (-not ('SmLnkProps' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+
+[StructLayout(LayoutKind.Sequential, Pack = 4)]
+public struct SM_PROPERTYKEY {
+    public Guid fmtid;
+    public UInt32 pid;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct SM_PROPVARIANT {
+    public ushort vt;
+    public ushort wReserved1;
+    public ushort wReserved2;
+    public ushort wReserved3;
+    public IntPtr pszVal;
+}
+
+[ComImport, InterfaceType(ComInterfaceType.InterfaceIsIUnknown),
+ Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99")]
+public interface SM_IPropertyStore {
+    void GetCount(out uint cProps);
+    void GetAt(uint iProp, out SM_PROPERTYKEY pkey);
+    void GetValue(ref SM_PROPERTYKEY key, out SM_PROPVARIANT pv);
+    void SetValue(ref SM_PROPERTYKEY key, ref SM_PROPVARIANT pv);
+    void Commit();
+}
+
+public static class SmLnkProps {
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+    private static extern void SHGetPropertyStoreFromParsingName(
+        string pszPath, IntPtr pbc, uint flags, [In] ref Guid riid, out SM_IPropertyStore ppv);
+
+    [DllImport("ole32.dll")]
+    private static extern void PropVariantClear(ref SM_PROPVARIANT pvar);
+
+    public static void SetAppId(string path, string appId) {
+        Guid iid = new Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99");
+        SM_IPropertyStore store;
+        SHGetPropertyStoreFromParsingName(path, IntPtr.Zero, 2 /* GPS_READWRITE */, ref iid, out store);
+        SM_PROPERTYKEY key;
+        key.fmtid = new Guid("9F4C2855-9F79-4B39-A8D0-E1D42DE1D5F3");
+        key.pid = 5;
+        SM_PROPVARIANT pv = new SM_PROPVARIANT();
+        if (string.IsNullOrEmpty(appId)) {
+            pv.vt = 0; // VT_EMPTY — remove a custom identity
+        } else {
+            pv.vt = 31; // VT_LPWSTR
+            pv.pszVal = Marshal.StringToCoTaskMemUni(appId);
+        }
+        try {
+            store.SetValue(ref key, ref pv);
+            store.Commit();
+        } finally {
+            PropVariantClear(ref pv);
+        }
+        Marshal.ReleaseComObject(store);
+    }
+}
+'@
+}
+
 function Set-FileExplorerShortcut {
     param(
         [string]$LnkPath,
@@ -83,8 +163,19 @@ function Set-FileExplorerShortcut {
     $sc.IconLocation = "$IconPath,0"
     $sc.Description = 'File Explorer'
     $sc.Save()
-    Write-Host "Updated: $LnkPath"
+    try { [SmLnkProps]::SetAppId($LnkPath, $explorerAppId) } catch { }
+    if (-not $Silent) { Write-Host "Updated: $LnkPath" }
     return $true
+}
+
+function Test-LnkTargetsExplorer {
+    param([string]$LnkPath)
+    if (-not (Test-Path -LiteralPath $LnkPath)) { return $false }
+    try {
+        $sh = New-Object -ComObject WScript.Shell
+        $sc = $sh.CreateShortcut($LnkPath)
+        return ($sc.TargetPath -match '(?i)\\explorer\.exe$')
+    } catch { return $false }
 }
 
 $shortcutTargets = @(
@@ -94,49 +185,84 @@ $shortcutTargets = @(
     (Join-Path $env:USERPROFILE 'Desktop\File Explorer.lnk')
 )
 
-foreach ($lnk in $shortcutTargets) {
-    Set-FileExplorerShortcut -LnkPath $lnk -IconPath $icoPath | Out-Null
+$pinnedDir = "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar"
+if (Test-Path -LiteralPath $pinnedDir) {
+    Get-ChildItem -LiteralPath $pinnedDir -Filter '*.lnk' -ErrorAction SilentlyContinue |
+        Where-Object { Test-LnkTargetsExplorer $_.FullName } |
+        ForEach-Object { $shortcutTargets += $_.FullName }
 }
 
-# Ensure a desktop shortcut exists for re-pin if taskbar still shows old icon
+foreach ($lnk in ($shortcutTargets | Select-Object -Unique)) {
+    Set-FileExplorerShortcut -LnkPath $lnk -IconPath $iconForShortcuts | Out-Null
+}
+
 $desktop = Join-Path $env:USERPROFILE 'OneDrive\Desktop'
 if (-not (Test-Path -LiteralPath $desktop)) {
     $desktop = Join-Path $env:USERPROFILE 'Desktop'
 }
 $desktopLnk = Join-Path $desktop 'File Explorer.lnk'
-Set-FileExplorerShortcut -LnkPath $desktopLnk -IconPath $icoPath | Out-Null
+Set-FileExplorerShortcut -LnkPath $desktopLnk -IconPath $iconForShortcuts | Out-Null
 
-# Recreate taskbar pin so Windows picks up the new icon (Win11 caches default AUMID icon)
 $taskbarLnk = "$env:APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\File Explorer.lnk"
+if (-not (Test-Path -LiteralPath $taskbarLnk) -and (Test-Path -LiteralPath $desktopLnk)) {
+    Copy-Item -LiteralPath $desktopLnk -Destination $taskbarLnk -Force
+}
 if (Test-Path -LiteralPath $taskbarLnk) {
-    Remove-Item -LiteralPath $taskbarLnk -Force
-    Start-Sleep -Milliseconds 500
-}
-Copy-Item -LiteralPath $desktopLnk -Destination $taskbarLnk -Force
-Set-FileExplorerShortcut -LnkPath $taskbarLnk -IconPath $icoPath | Out-Null
-
-Write-Host 'Refreshing icon cache...'
-Get-Process -Name explorer -ErrorAction SilentlyContinue | ForEach-Object {
-    try { $_.CloseMainWindow() | Out-Null } catch { }
-}
-Start-Sleep -Seconds 2
-Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 1
-
-$iconCache = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Explorer'
-Get-ChildItem $iconCache -Filter 'iconcache*' -ErrorAction SilentlyContinue |
-    Remove-Item -Force -ErrorAction SilentlyContinue
-Get-ChildItem $iconCache -Filter 'thumbcache*' -ErrorAction SilentlyContinue |
-    Remove-Item -Force -ErrorAction SilentlyContinue
-
-$ie4u = Join-Path ${env:ProgramFiles(x86)} 'Internet Explorer\ie4uinit.exe'
-if (Test-Path -LiteralPath $ie4u) {
-    Start-Process -FilePath $ie4u -ArgumentList '-show' -WindowStyle Hidden -Wait -ErrorAction SilentlyContinue
+    Set-FileExplorerShortcut -LnkPath $taskbarLnk -IconPath $iconForShortcuts | Out-Null
 }
 
-Start-Process -FilePath $explorerExe
-Start-Sleep -Seconds 3
+# Per-monitor copies created by Independent taskbar per monitor
+$linkRoots = @(
+    (Join-Path $env:LOCALAPPDATA 'Windhawk'),
+    (Join-Path $env:ProgramData 'Windhawk')
+)
+foreach ($root in $linkRoots) {
+    if (-not (Test-Path -LiteralPath $root)) { continue }
+    Get-ChildItem -LiteralPath $root -Recurse -Filter '*.lnk' -ErrorAction SilentlyContinue |
+        Where-Object { $_.DirectoryName -match 'TaskbarLinks' -and (Test-LnkTargetsExplorer $_.FullName) } |
+        ForEach-Object {
+            Set-FileExplorerShortcut -LnkPath $_.FullName -IconPath $iconForShortcuts | Out-Null
+        }
+}
 
-Write-Host ''
-Write-Host 'File Explorer icon applied.'
-Write-Host 'Check taskbar + desktop shortcut. If still old: unpin taskbar icon, then Pin to taskbar from desktop shortcut.'
+if (-not ('SmShellNotify' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.Runtime.InteropServices;
+public static class SmShellNotify {
+    [DllImport("shell32.dll")]
+    public static extern void SHChangeNotify(uint wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
+}
+'@
+}
+[SmShellNotify]::SHChangeNotify(0x08000000, 0x1000, [IntPtr]::Zero, [IntPtr]::Zero)
+
+if ($RestartExplorer) {
+    if (-not $Silent) { Write-Host 'Refreshing icon cache...' }
+    Get-Process -Name explorer -ErrorAction SilentlyContinue | ForEach-Object {
+        try { $_.CloseMainWindow() | Out-Null } catch { }
+    }
+    Start-Sleep -Seconds 2
+    Stop-Process -Name explorer -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 1
+
+    $iconCache = Join-Path $env:LOCALAPPDATA 'Microsoft\Windows\Explorer'
+    Get-ChildItem $iconCache -Filter 'iconcache*' -ErrorAction SilentlyContinue |
+        Remove-Item -Force -ErrorAction SilentlyContinue
+    Get-ChildItem $iconCache -Filter 'thumbcache*' -ErrorAction SilentlyContinue |
+        Remove-Item -Force -ErrorAction SilentlyContinue
+
+    $ie4u = Join-Path ${env:ProgramFiles(x86)} 'Internet Explorer\ie4uinit.exe'
+    if (Test-Path -LiteralPath $ie4u) {
+        Start-Process -FilePath $ie4u -ArgumentList '-show' -WindowStyle Hidden -Wait -ErrorAction SilentlyContinue
+    }
+
+    Start-Process -FilePath $explorerExe
+    Start-Sleep -Seconds 3
+}
+
+if (-not $Silent) {
+    Write-Host ''
+    Write-Host 'File Explorer icon applied.'
+    Write-Host 'Check taskbar + desktop. If still the yellow folder: unpin File Explorer, then pin the desktop shortcut.'
+}
