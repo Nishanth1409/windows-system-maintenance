@@ -5,7 +5,7 @@
 **(Chrome extensions and Windhawk are separate GitHub projects — not stored in this folder.)**  
 **Menu:** Desktop right-click → **Show more options** (Windows 11) → **System Maintenance**  
 **Install menu:** `Install_Menu.bat`  
-**Last updated:** 6 September 2026 (OEM adapt all PCs + Nilesoft menu icon pins)
+**Last updated:** 13 November 2026 (KB5132061 / 26300.9974 check)
 
 ---
 
@@ -1148,6 +1148,20 @@ Checked after the update:
 - Taskbar mod version detection treats build >= 26100 as the Windows 11 taskbar.dll path. Build 26300 uses that same path. No enum change.
 
 If Personalization → Background or Lock screen stops opening again, disable `windows-11-settings-styler` (set `Disabled=1` or toggle it off in Windhawk). Do not re-enable it until those two pages open.
+
+### November 2026 — KB5132061 (build 26300.9974)
+
+Installed 13 November 2026: **2026-11 Security Update (KB5132061)** plus .NET 8/9/10 security updates and Defender intelligence. Build is `10.0.26300.9974`.
+
+Checked the same day:
+
+- `_FinalCheck.ps1` passed. Desktop menu keys, NVIDIA duplicate hide, Nilesoft pins, File Explorer icon, and `\SystemMaintenance\` tasks (`HideNvidiaDesktopMenu`, `ApplyFileExplorerIcon`, `LockScreenBackupPrune`) are healthy.
+- NVIDIA duplicate handlers were **not** restored (`StillPresent = False`). Re-ran hide + Nilesoft + OEM guards anyway (this update is known to revive `NvCplDesktopContext` on some PCs).
+- Windhawk is running. `windows-11-taskbar-styler` loaded into `explorer.exe`. Community reports that KB5132061 broke mods on **26100.9974** until symbols were mapped; this 26H2 PC (`26300.9974`) had mods loaded after reboot. If a mod goes blank after a later Patch Tuesday, disable then re-enable it in Windhawk (do not uninstall the security update).
+- The old `{86ca1aa0-…}` registry trick no longer forces the classic context menu. This toolkit already uses **Nilesoft Shell** + **Show more options** / Shift+right-click. No registry change required.
+- Kernel-Power 41 at 15:25 had `LongPowerButtonPressDetected=true` and `BugcheckCode=0` — hard power-button hold, not a BSOD. No minidumps.
+
+No System Maintenance script changes were required for this update.
 
 ### July 2026 — Flashing PowerShell window every ~25 seconds (Intel SUR)
 
